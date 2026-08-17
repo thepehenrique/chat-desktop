@@ -1,0 +1,27 @@
+{
+  "name": "chat-desktop",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc && vite build",
+    "start": "npm run build && electron .",
+    "dev": "concurrently -k \"tsc --watch\" \"vite\" \"wait-on http://localhost:5173 && nodemon --watch dist/main --watch dist/preload --exec electron .\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "concurrently": "^10.0.5",
+    "electron": "^43.4.0",
+    "nodemon": "^3.1.14",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "wait-on": "^9.1.0"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

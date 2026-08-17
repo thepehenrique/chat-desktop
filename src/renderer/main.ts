@@ -1,0 +1,75 @@
+import { LoginPage } from "./pages/login/login.page.js";
+import { ChatPage } from "./pages/chat/chat.page.js";
+import { AppState } from "./state/app.state.js";
+
+const app = document.querySelector<HTMLDivElement>("#app");
+
+if (!app) {
+  throw new Error("Elemento #app não encontrado.");
+}
+const appState = new AppState();
+const loginPage = new LoginPage();
+const chatPage = new ChatPage();
+
+const showLogin = (): void => {
+  loginPage.render(app);
+
+  loginPage.bindEvents(async (email, password) => {
+    try {
+      const user = await window.api.auth.login(email, password);
+
+      appState.setAuthenticatedUser(user);
+
+      const users = await window.api.users.findAll();
+
+      appState.setUsers(users);
+
+      showChat();
+    } catch (error) {
+      console.error("Erro ao realizar login:", error);
+    }
+  });
+};
+
+const showChat = (): void => {
+  const user = appState.getAuthenticatedUser();
+
+  if (!user) {
+    showLogin();
+    return;
+  }
+
+  chatPage.render(
+    app,
+    user,
+    appState.getUsers(),
+    (userId) => appState.isUserOnline(userId),
+    async () => {
+      await window.api.auth.logout();
+
+      appState.clear();
+
+      showLogin();
+    }
+  );
+};
+
+window.api.socket.onOnlineUsers(({ userIds }) => {
+  appState.setOnlineUsers(userIds);
+
+  showChat();
+});
+
+window.api.socket.onUserOnline(({ userId }) => {
+  appState.setUserOnline(userId);
+
+  showChat();
+});
+
+window.api.socket.onUserOffline(({ userId }) => {
+  appState.setUserOffline(userId);
+
+  showChat();
+});
+
+showLogin();
