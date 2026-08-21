@@ -48,8 +48,13 @@ const showChat = (): void => {
 
     (userId) => appState.isUserOnline(userId),
 
+    (userId) => appState.getUnreadMessages(userId),
+
     (selectedUser) => {
       appState.setSelectedUser(selectedUser);
+
+      appState.clearUnreadMessages(selectedUser.id);
+
       showChat();
     },
 
@@ -100,7 +105,23 @@ window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
     content,
   });
 
+  const selectedUser = appState.getSelectedUser();
+
+  const isConversationOpen = selectedUser?.id === senderId;
+
+  if (!isConversationOpen) {
+    appState.incrementUnreadMessages(senderId);
+  }
+
+  void notificationSound.play().catch((error) => {
+    console.error("Erro ao reproduzir som de notificação:", error);
+  });
+
   showChat();
 });
+
+const notificationSound = new Audio("./assets/popup.mp3");
+
+notificationSound.volume = 0.25;
 
 showLogin();

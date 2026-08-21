@@ -1,6 +1,6 @@
-import { AuthenticatedUser } from "../../../commom/interface/authenticated-user.interface.js";
-import { ChatMessage } from "../../interface/chat-message.interface.js";
-import { User } from "../../interface/user.interface.js";
+import { AuthenticatedUser } from "../../../commom/interface/authenticated-user.interface";
+import { ChatMessage } from "../../interface/chat-message.interface";
+import { User } from "../../interface/user.interface";
 
 export class ChatPage {
   render(
@@ -10,6 +10,7 @@ export class ChatPage {
     selectedUser: User | null,
     messages: ChatMessage[],
     isUserOnline: (userId: number) => boolean,
+    getUnreadMessages: (userId: number) => number,
     onSelectUser: (user: User) => void,
     onSendMessage: (receiverId: number, content: string) => Promise<void>,
     onLogout: () => Promise<void>
@@ -21,6 +22,8 @@ export class ChatPage {
 
         const selected = selectedUser?.id === item.id;
 
+        const unreadCount = getUnreadMessages(item.id);
+
         return `
           <button
             class="chat__user ${selected ? "chat__user--selected" : ""}"
@@ -31,7 +34,19 @@ export class ChatPage {
               class="chat__status ${online ? "chat__status--online" : ""}"
             ></span>
 
-            <span>${item.name}</span>
+            <span class="chat__user-name">
+              ${item.name}
+            </span>
+
+            ${
+              unreadCount > 0
+                ? `
+                  <span class="chat__user-notification">
+                    ${unreadCount}
+                  </span>
+                `
+                : ""
+            }
           </button>
         `;
       })
@@ -39,10 +54,6 @@ export class ChatPage {
 
     const chatTitle = selectedUser?.name ?? "Selecione uma conversa";
 
-    /*
-     * Mostra somente as mensagens entre
-     * o usuário logado e o usuário selecionado.
-     */
     const conversationMessages = selectedUser
       ? messages.filter(
           (message) =>
@@ -61,27 +72,29 @@ export class ChatPage {
             const senderName = isOwnMessage ? user.name : selectedUser?.name;
 
             return `
-          <div
-            class="chat__message ${
-              isOwnMessage ? "chat__message--own" : "chat__message--received"
-            }"
-          >
-            <span class="chat__message-sender">
-              ${senderName}
-            </span>
+              <div
+                class="chat__message ${
+                  isOwnMessage
+                    ? "chat__message--own"
+                    : "chat__message--received"
+                }"
+              >
+                <span class="chat__message-sender">
+                  ${senderName}
+                </span>
 
-            <p class="chat__message-content">
-              ${message.content}
-            </p>
-          </div>
-        `;
+                <p class="chat__message-content">
+                  ${message.content}
+                </p>
+              </div>
+            `;
           })
           .join("")
       : `
-      <p class="chat__empty-message">
-        Nenhuma mensagem ainda.
-      </p>
-    `;
+          <p class="chat__empty-message">
+            Nenhuma mensagem ainda.
+          </p>
+        `;
 
     const conversationContent = selectedUser
       ? `

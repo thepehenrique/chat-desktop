@@ -13,6 +13,8 @@ export class AppState {
 
   private messages: ChatMessage[] = [];
 
+  private unreadMessages = new Map<number, number>();
+
   setAuthenticatedUser(user: AuthenticatedUser): void {
     this.authenticatedUser = user;
   }
@@ -67,6 +69,20 @@ export class AppState {
 
   clearSelectedUser(): void {
     this.selectedUser = null;
+  }
+
+  incrementUnreadMessages(userId: number): void {
+    const current = this.unreadMessages.get(userId) ?? 0;
+
+    this.unreadMessages.set(userId, current + 1);
+  }
+
+  getUnreadMessages(userId: number): number {
+    return this.unreadMessages.get(userId) ?? 0;
+  }
+
+  clearUnreadMessages(userId: number): void {
+    this.unreadMessages.delete(userId);
   }
 
   clear(): void {
