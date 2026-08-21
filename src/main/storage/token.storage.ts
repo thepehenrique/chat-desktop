@@ -1,10 +1,7 @@
 import { app, safeStorage } from "electron";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-
-interface StoredTokens {
-  refreshToken: string;
-}
+import { StoredTokens } from "../interface/stored-token.interface.js";
 
 export class TokenStorage {
   private readonly filePath: string;

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { AuthService } from "./services/auth.service.js";
@@ -34,7 +35,13 @@ const createWindow = (): void => {
   });
 
   if (isDevelopment) {
-    void window.loadURL("http://localhost:5173");
+    const webUrl = process.env.WEB_URL;
+
+    if (!webUrl) {
+      throw new Error("WEB_URL não definida.");
+    }
+
+    void window.loadURL(webUrl);
   } else {
     void window.loadFile(
       path.join(import.meta.dirname, "../renderer/index.html")
@@ -66,6 +73,8 @@ ipcMain.handle("auth:refresh", async () => {
 });
 
 app.whenReady().then(async () => {
+  createWindow();
+
   try {
     const user = await appService.initialize();
 
@@ -75,8 +84,6 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error("Erro ao restaurar sessão:", error);
   }
-
-  createWindow();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -88,6 +95,13 @@ app.whenReady().then(async () => {
 ipcMain.handle("users:find-all", async () => {
   return userService.findAll();
 });
+
+ipcMain.handle(
+  "socket:send-message",
+  async (_event, receiverId: number, content: string) => {
+    socketService.sendMessage(receiverId, content);
+  }
+);
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

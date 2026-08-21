@@ -1,4 +1,5 @@
-import { AuthService, AuthenticatedUser } from "./auth.service.js";
+import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
+import { AuthService } from "./auth.service.js";
 import { SessionService } from "./session.service.js";
 
 export class AppService {

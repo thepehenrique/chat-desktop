@@ -1,12 +1,6 @@
-import type { User } from "./user.types.js";
-
-export interface AuthenticatedUser {
-  id: number;
-  name: string;
-  email: string;
-  isActive: boolean;
-  role: string;
-}
+import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
+import { ChatMessage } from "../interface/chat-message.interface.js";
+import { User } from "../interface/user.interface.js";
 
 export class AppState {
   private authenticatedUser: AuthenticatedUser | null = null;
@@ -16,6 +10,8 @@ export class AppState {
   private selectedUser: User | null = null;
 
   private onlineUsers = new Set<number>();
+
+  private messages: ChatMessage[] = [];
 
   setAuthenticatedUser(user: AuthenticatedUser): void {
     this.authenticatedUser = user;
@@ -61,6 +57,14 @@ export class AppState {
     return this.selectedUser;
   }
 
+  addMessage(message: ChatMessage): void {
+    this.messages.push(message);
+  }
+
+  getMessages(): ChatMessage[] {
+    return this.messages;
+  }
+
   clearSelectedUser(): void {
     this.selectedUser = null;
   }
@@ -70,5 +74,6 @@ export class AppState {
     this.users = [];
     this.onlineUsers.clear();
     this.selectedUser = null;
+    this.messages = [];
   }
 }

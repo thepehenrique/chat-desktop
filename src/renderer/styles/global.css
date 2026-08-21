@@ -309,3 +309,173 @@ button {
 .chat__user--selected:hover {
   background: #2c323e;
 }
+
+/* ==============================
+   MESSAGE INPUT
+   ============================== */
+
+.chat__conversation {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+}
+
+/* ==============================
+   MESSAGES
+   ============================== */
+
+.chat__messages {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+
+  padding: 24px;
+
+  overflow-y: auto;
+}
+
+.chat__empty-message {
+  margin: auto;
+
+  color: #626a78;
+  font-size: 14px;
+}
+
+.chat__message {
+  display: flex;
+  flex-direction: column;
+
+  max-width: 70%;
+
+  padding: 10px 14px;
+
+  border-radius: 10px;
+
+  line-height: 1.5;
+}
+
+.chat__message--received {
+  align-self: flex-start;
+
+  background: #171a21;
+
+  border: 1px solid #252a34;
+}
+
+.chat__message--own {
+  align-self: flex-end;
+
+  background: #6c7cff;
+
+  color: #ffffff;
+}
+
+.chat__message-sender {
+  margin-bottom: 4px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #8f96a3;
+}
+
+.chat__message--own .chat__message-sender {
+  color: #e5e7eb;
+}
+
+.chat__message-content {
+  margin: 0;
+
+  font-size: 14px;
+
+  overflow-wrap: anywhere;
+}
+
+.chat__message-form {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 16px 24px;
+
+  border-top: 1px solid #252a34;
+
+  background: #171a21;
+}
+
+.chat__message-form input {
+  flex: 1;
+
+  min-width: 0;
+  height: 44px;
+
+  padding: 0 14px;
+
+  color: #f1f3f5;
+  background: #101218;
+
+  border: 1px solid #2a303b;
+  border-radius: 8px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.chat__message-form input::placeholder {
+  color: #626a78;
+}
+
+.chat__message-form input:hover {
+  border-color: #39414f;
+}
+
+.chat__message-form input:focus {
+  border-color: #6c7cff;
+
+  box-shadow:
+    0 0 0 3px rgba(108, 124, 255, 0.12);
+}
+
+.chat__message-form button {
+  height: 44px;
+
+  padding: 0 20px;
+
+  border-radius: 8px;
+
+  background: #6c7cff;
+  color: #ffffff;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease,
+    opacity 0.2s ease;
+}
+
+.chat__message-form button:hover {
+  background: #5c6cf0;
+}
+
+.chat__message-form button:active {
+  transform: scale(0.97);
+}
+
+.chat__message-form button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}

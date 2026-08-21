@@ -43,7 +43,28 @@ const showChat = (): void => {
     app,
     user,
     appState.getUsers(),
+    appState.getSelectedUser(),
+    appState.getMessages(),
+
     (userId) => appState.isUserOnline(userId),
+
+    (selectedUser) => {
+      appState.setSelectedUser(selectedUser);
+      showChat();
+    },
+
+    async (receiverId, content) => {
+      await window.api.socket.sendMessage(receiverId, content);
+
+      appState.addMessage({
+        senderId: user.id,
+        receiverId,
+        content,
+      });
+
+      showChat();
+    },
+
     async () => {
       await window.api.auth.logout();
 
@@ -68,6 +89,16 @@ window.api.socket.onUserOnline(({ userId }) => {
 
 window.api.socket.onUserOffline(({ userId }) => {
   appState.setUserOffline(userId);
+
+  showChat();
+});
+
+window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
+  appState.addMessage({
+    senderId,
+    receiverId,
+    content,
+  });
 
   showChat();
 });

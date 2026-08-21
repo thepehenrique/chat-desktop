@@ -1,20 +1,9 @@
+import "dotenv/config";
 import { SessionService } from "./session.service.js";
+import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
+import { LoginResponse } from "../interface/login-response.interface.js";
 
-const API_URL = "http://localhost:3000/api";
-
-interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface AuthenticatedUser {
-  id: number;
-  name: string;
-  email: string;
-  isActive: boolean;
-  role: string;
-}
-
+const API_URL = process.env.API_URL;
 export class AuthService {
   constructor(private readonly sessionService: SessionService) {}
 

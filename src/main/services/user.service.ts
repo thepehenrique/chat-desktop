@@ -1,13 +1,6 @@
+import "dotenv/config";
+import { User } from "../interface/user.interface.js";
 import { SessionService } from "./session.service.js";
-
-const API_URL = "http://localhost:3000/api";
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  isActive: boolean;
-}
 
 export class UserService {
   constructor(private readonly sessionService: SessionService) {}
@@ -19,7 +12,7 @@ export class UserService {
       throw new Error("Usuário não autenticado.");
     }
 
-    const response = await fetch(`${API_URL}/users`, {
+    const response = await fetch(`${process.env.API_URL}/users`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,

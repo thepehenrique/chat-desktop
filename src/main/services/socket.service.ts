@@ -1,8 +1,7 @@
+import "dotenv/config";
 import { io, Socket } from "socket.io-client";
 import { SessionService } from "./session.service.js";
 import { BrowserWindow } from "electron";
-
-const SOCKET_URL = "http://localhost:3000";
 
 export class SocketService {
   private socket: Socket | null = null;
@@ -20,7 +19,7 @@ export class SocketService {
       throw new Error("Não é possível conectar ao Socket.IO sem accessToken.");
     }
 
-    this.socket = io(SOCKET_URL, {
+    this.socket = io(process.env.SOCKET_URL, {
       auth: {
         token: accessToken,
       },
@@ -28,6 +27,7 @@ export class SocketService {
 
     this.registerConnectionEvents();
     this.registerPresenceEvents();
+    this.registerMessageEvents();
   }
   private registerConnectionEvents(): void {
     if (!this.socket) {
@@ -76,5 +76,31 @@ export class SocketService {
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(channel, payload);
     }
+  }
+
+  sendMessage(receiverId: number, content: string): void {
+    if (!this.socket?.connected) {
+      throw new Error("Socket.IO não está conectado.");
+    }
+
+    this.socket.emit("send_message", {
+      receiverId,
+      content,
+    });
+  }
+
+  private registerMessageEvents(): void {
+    if (!this.socket) {
+      return;
+    }
+
+    this.socket.on(
+      "new_message",
+      (data: { senderId: number; receiverId: number; content: string }) => {
+        console.log("[SocketService] new_message:", data);
+
+        this.emitToRenderer("socket:new-message", data);
+      }
+    );
   }
 }

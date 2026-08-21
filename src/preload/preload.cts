@@ -70,6 +70,18 @@ contextBridge.exposeInMainWorld("api", {
         ipcRenderer.removeListener("socket:online-users", listener);
       };
     },
+
+    sendMessage: (receiverId: number, content: string): Promise<void> => {
+      return ipcRenderer.invoke("socket:send-message", receiverId, content);
+    },
+
+    onNewMessage: (
+      callback: (data: { senderId: number; content: string }) => void
+    ): void => {
+      ipcRenderer.on("socket:new-message", (_event, data) => {
+        callback(data);
+      });
+    },
   },
 
   users: {
