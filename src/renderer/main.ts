@@ -1,6 +1,8 @@
 import { LoginPage } from "./pages/login/login.page.js";
 import { ChatPage } from "./pages/chat/chat.page.js";
 import { AppState } from "./state/app.state.js";
+import { RegisterPage } from "./pages/register/register.page.js";
+import { VerifyEmailPage } from "./pages/verify-email/verify-email.page.js";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -10,25 +12,33 @@ if (!app) {
 const appState = new AppState();
 const loginPage = new LoginPage();
 const chatPage = new ChatPage();
+const registerPage = new RegisterPage();
+const verifyEmailPage = new VerifyEmailPage();
 
 const showLogin = (): void => {
   loginPage.render(app);
 
-  loginPage.bindEvents(async (email, password) => {
-    try {
-      const user = await window.api.auth.login(email, password);
+  loginPage.bindEvents(
+    async (email, password) => {
+      try {
+        const user = await window.api.auth.login(email, password);
 
-      appState.setAuthenticatedUser(user);
+        appState.setAuthenticatedUser(user);
 
-      const users = await window.api.users.findAll();
+        const users = await window.api.users.findAll();
 
-      appState.setUsers(users);
+        appState.setUsers(users);
 
-      showChat();
-    } catch (error) {
-      console.error("Erro ao realizar login:", error);
+        showChat();
+      } catch (error) {
+        console.error("Erro ao realizar login:", error);
+      }
+    },
+
+    () => {
+      showRegister();
     }
-  });
+  );
 };
 
 const showChat = (): void => {
@@ -141,5 +151,59 @@ window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
 const notificationSound = new Audio("./assets/popup.mp3");
 
 notificationSound.volume = 0.25;
+
+const showRegister = (): void => {
+  registerPage.render(app);
+
+  registerPage.bindEvents(
+    async (name, email, password) => {
+      try {
+        const userId = await window.api.auth.register(name, email, password);
+
+        console.log("[Renderer] Usuário cadastrado:", userId);
+
+        showVerifyEmail(email);
+      } catch (error) {
+        console.error("[Renderer] Erro ao realizar cadastro:", error);
+      }
+    },
+
+    () => {
+      showLogin();
+    }
+  );
+};
+
+const showVerifyEmail = (email: string): void => {
+  verifyEmailPage.render(app, email);
+
+  verifyEmailPage.bindEvents(
+    async (code) => {
+      try {
+        await window.api.auth.verifyEmail(email, code);
+
+        console.log("[Renderer] E-mail verificado com sucesso.");
+
+        showLogin();
+      } catch (error) {
+        console.error("[Renderer] Erro ao verificar e-mail:", error);
+      }
+    },
+
+    async () => {
+      try {
+        await window.api.auth.resendVerification(email);
+
+        console.log("[Renderer] Código reenviado.");
+      } catch (error) {
+        console.error("[Renderer] Erro ao reenviar código:", error);
+      }
+    },
+
+    () => {
+      showLogin();
+    }
+  );
+};
 
 showLogin();

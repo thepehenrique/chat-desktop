@@ -9,6 +9,16 @@ declare global {
       auth: {
         login: (email: string, password: string) => Promise<AuthenticatedUser>;
 
+        register: (
+          name: string,
+          email: string,
+          password: string
+        ) => Promise<number>;
+
+        verifyEmail: (email: string, code: string) => Promise<void>;
+
+        resendVerification: (email: string) => Promise<void>;
+
         refresh: () => Promise<boolean>;
 
         logout: () => Promise<boolean>;

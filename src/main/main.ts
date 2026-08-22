@@ -99,6 +99,33 @@ app.on("window-all-closed", () => {
   }
 });
 
+ipcMain.handle(
+  "users:register",
+  async (_event, name: string, email: string, password: string) => {
+    return userService.create({
+      name,
+      email,
+      password,
+    });
+  }
+);
+
+ipcMain.handle(
+  "auth:verify-email",
+  async (_event, email: string, code: string) => {
+    await authService.verifyEmail({
+      email,
+      code,
+    });
+  }
+);
+
+ipcMain.handle("auth:resend-verification", async (_event, email: string) => {
+  await authService.resendVerificationEmail({
+    email,
+  });
+});
+
 ipcMain.handle("auth:logout", async () => {
   socketService.disconnect();
 

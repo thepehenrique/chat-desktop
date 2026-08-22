@@ -10,6 +10,22 @@ contextBridge.exposeInMainWorld("api", {
       return ipcRenderer.invoke("auth:login", email, password);
     },
 
+    register: (
+      name: string,
+      email: string,
+      password: string
+    ): Promise<number> => {
+      return ipcRenderer.invoke("users:register", name, email, password);
+    },
+
+    verifyEmail: (email: string, code: string): Promise<void> => {
+      return ipcRenderer.invoke("auth:verify-email", email, code);
+    },
+
+    resendVerification: (email: string): Promise<void> => {
+      return ipcRenderer.invoke("auth:resend-verification", email);
+    },
+
     refresh: (): Promise<boolean> => {
       return ipcRenderer.invoke("auth:refresh");
     },
@@ -76,7 +92,11 @@ contextBridge.exposeInMainWorld("api", {
     },
 
     onNewMessage: (
-      callback: (data: { senderId: number; content: string }) => void
+      callback: (data: {
+        senderId: number;
+        receiverId: number;
+        content: string;
+      }) => void
     ): void => {
       ipcRenderer.on("socket:new-message", (_event, data) => {
         callback(data);
