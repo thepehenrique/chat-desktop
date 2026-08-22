@@ -15,42 +15,53 @@ export class ChatPage {
     onSendMessage: (receiverId: number, content: string) => Promise<void>,
     onLogout: () => Promise<void>
   ): void {
-    const usersHtml = users
-      .filter((item) => item.id !== user.id)
-      .map((item) => {
-        const online = isUserOnline(item.id);
+    const availableUsers = users.filter((item) => item.id !== user.id);
 
-        const selected = selectedUser?.id === item.id;
+    const onlineUsers = availableUsers.filter((item) => isUserOnline(item.id));
 
-        const unreadCount = getUnreadMessages(item.id);
+    const offlineUsers = availableUsers.filter(
+      (item) => !isUserOnline(item.id)
+    );
 
-        return `
-          <button
-            class="chat__user ${selected ? "chat__user--selected" : ""}"
-            data-user-id="${item.id}"
-            type="button"
-          >
-            <span
-              class="chat__status ${online ? "chat__status--online" : ""}"
-            ></span>
+    const renderUser = (item: User): string => {
+      const online = isUserOnline(item.id);
 
-            <span class="chat__user-name">
-              ${item.name}
-            </span>
+      console.log("[ChatPage] usuário:", item.id, item.name, "online:", online);
 
-            ${
-              unreadCount > 0
-                ? `
-                  <span class="chat__user-notification">
-                    ${unreadCount}
-                  </span>
-                `
-                : ""
-            }
-          </button>
-        `;
-      })
-      .join("");
+      const selected = selectedUser?.id === item.id;
+
+      const unreadCount = getUnreadMessages(item.id);
+
+      return `
+        <button
+          class="chat__user ${selected ? "chat__user--selected" : ""}"
+          data-user-id="${item.id}"
+          type="button"
+        >
+          <span
+            class="chat__status ${online ? "chat__status--online" : ""}"
+          ></span>
+
+          <span class="chat__user-name">
+            ${item.name}
+          </span>
+
+          ${
+            unreadCount > 0
+              ? `
+                <span class="chat__user-notification">
+                  ${unreadCount}
+                </span>
+              `
+              : ""
+          }
+        </button>
+      `;
+    };
+
+    const onlineUsersHtml = onlineUsers.map(renderUser).join("");
+
+    const offlineUsersHtml = offlineUsers.map(renderUser).join("");
 
     const chatTitle = selectedUser?.name ?? "Selecione uma conversa";
 
@@ -72,29 +83,29 @@ export class ChatPage {
             const senderName = isOwnMessage ? user.name : selectedUser?.name;
 
             return `
-              <div
-                class="chat__message ${
-                  isOwnMessage
-                    ? "chat__message--own"
-                    : "chat__message--received"
-                }"
-              >
-                <span class="chat__message-sender">
-                  ${senderName}
-                </span>
+                <div
+                  class="chat__message ${
+                    isOwnMessage
+                      ? "chat__message--own"
+                      : "chat__message--received"
+                  }"
+                >
+                  <span class="chat__message-sender">
+                    ${senderName}
+                  </span>
 
-                <p class="chat__message-content">
-                  ${message.content}
-                </p>
-              </div>
-            `;
+                  <p class="chat__message-content">
+                    ${message.content}
+                  </p>
+                </div>
+              `;
           })
           .join("")
       : `
-          <p class="chat__empty-message">
-            Nenhuma mensagem ainda.
-          </p>
-        `;
+            <p class="chat__empty-message">
+              Nenhuma mensagem ainda.
+            </p>
+          `;
 
     const conversationContent = selectedUser
       ? `
@@ -138,7 +149,41 @@ export class ChatPage {
           </header>
 
           <div class="chat__users">
-            ${usersHtml}
+
+            <section class="chat__users-section">
+
+              <h3 class="chat__users-title">
+                Online
+              </h3>
+
+              ${
+                onlineUsersHtml ||
+                `
+                  <p class="chat__users-empty">
+                    Nenhum usuário online
+                  </p>
+                `
+              }
+
+            </section>
+
+            <section class="chat__users-section">
+
+              <h3 class="chat__users-title">
+                Offline
+              </h3>
+
+              ${
+                offlineUsersHtml ||
+                `
+                  <p class="chat__users-empty">
+                    Nenhum usuário offline
+                  </p>
+                `
+              }
+
+            </section>
+
           </div>
 
         </aside>

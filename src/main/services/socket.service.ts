@@ -9,7 +9,11 @@ export class SocketService {
   constructor(private readonly sessionService: SessionService) {}
 
   connect(): void {
+    console.log("[SocketService] connect() chamado");
+
     if (this.socket?.connected) {
+      console.log("[SocketService] Socket já conectado:", this.socket.id);
+
       return;
     }
 
@@ -19,6 +23,8 @@ export class SocketService {
       throw new Error("Não é possível conectar ao Socket.IO sem accessToken.");
     }
 
+    console.log("[SocketService] Criando novo socket...");
+
     this.socket = io(process.env.SOCKET_URL, {
       auth: {
         token: accessToken,
@@ -26,56 +32,75 @@ export class SocketService {
     });
 
     this.registerConnectionEvents();
-    this.registerPresenceEvents();
-    this.registerMessageEvents();
+    this.registerPresenceEvents(this.socket);
+    this.registerMessageEvents(this.socket);
   }
+
   private registerConnectionEvents(): void {
     if (!this.socket) {
       return;
     }
 
     this.socket.on("connect", () => {
-      console.log("Socket.IO conectado:", this.socket?.id);
+      console.log("[SocketService] Socket conectado:", this.socket?.id);
     });
 
     this.socket.on("connect_error", (error) => {
-      console.error("Erro na conexão Socket.IO:", error.message);
+      console.error("[SocketService] Erro na conexão:", error.message);
     });
 
     this.socket.on("disconnect", (reason) => {
-      console.log("Socket.IO desconectado:", reason);
+      console.log("[SocketService] Socket desconectado:", reason);
     });
   }
 
-  private registerPresenceEvents(): void {
-    if (!this.socket) {
-      return;
-    }
+  private registerPresenceEvents(socket: Socket): void {
+    console.log("[SocketService] registerPresenceEvents() chamado");
 
-    this.socket.on("online_users", (data: { userIds: number[] }) => {
-      console.log("[SocketService] online_users:", data);
+    console.log("[SocketService] socket:", socket.id);
+
+    socket.on("online_users", (data: { userIds: number[] }) => {
+      console.log("[SocketService] online_users:", {
+        socketId: socket.id,
+        userIds: data.userIds,
+      });
 
       this.emitToRenderer("socket:online-users", data);
     });
 
-    this.socket.on("user_online", (data: { userId: number }) => {
+    socket.on("user_online", (data: { userId: number }) => {
+      console.log("[SocketService] user_online:", {
+        socketId: socket.id,
+        userId: data.userId,
+      });
+
       this.emitToRenderer("socket:user-online", data);
     });
 
-    this.socket.on("user_offline", (data: { userId: number }) => {
+    socket.on("user_offline", (data: { userId: number }) => {
+      console.log("[SocketService] user_offline:", {
+        socketId: socket.id,
+        userId: data.userId,
+      });
+
       this.emitToRenderer("socket:user-offline", data);
     });
   }
 
   disconnect(): void {
-    this.socket?.disconnect();
-    this.socket = null;
-  }
+    console.log("[SocketService] disconnect() chamado");
 
-  private emitToRenderer(channel: string, payload: unknown): void {
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.webContents.send(channel, payload);
-    }
+    console.log(
+      "[SocketService] Socket antes:",
+      this.socket?.id,
+      this.socket?.connected
+    );
+
+    this.socket?.disconnect();
+
+    this.socket = null;
+
+    console.log("[SocketService] Socket depois:", this.socket);
   }
 
   sendMessage(receiverId: number, content: string): void {
@@ -89,12 +114,12 @@ export class SocketService {
     });
   }
 
-  private registerMessageEvents(): void {
-    if (!this.socket) {
-      return;
-    }
+  private registerMessageEvents(socket: Socket): void {
+    console.log("[SocketService] registerMessageEvents() chamado");
 
-    this.socket.on(
+    console.log("[SocketService] socket:", socket.id);
+
+    socket.on(
       "new_message",
       (data: { senderId: number; receiverId: number; content: string }) => {
         console.log("[SocketService] new_message:", data);
@@ -102,5 +127,11 @@ export class SocketService {
         this.emitToRenderer("socket:new-message", data);
       }
     );
+  }
+
+  private emitToRenderer(channel: string, payload: unknown): void {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(channel, payload);
+    }
   }
 }

@@ -81,19 +81,37 @@ const showChat = (): void => {
 };
 
 window.api.socket.onOnlineUsers(({ userIds }) => {
+  console.log("[Renderer] online_users recebido:", userIds);
+
   appState.setOnlineUsers(userIds);
+
+  console.log("[Renderer] onlineUsers após set:", appState.getOnlineUsers());
 
   showChat();
 });
 
 window.api.socket.onUserOnline(({ userId }) => {
+  console.log("[Renderer] user_online recebido:", userId);
+
   appState.setUserOnline(userId);
+
+  console.log(
+    "[Renderer] onlineUsers após user_online:",
+    appState.getOnlineUsers()
+  );
 
   showChat();
 });
 
 window.api.socket.onUserOffline(({ userId }) => {
+  console.log("[Renderer] user_offline recebido:", userId);
+
   appState.setUserOffline(userId);
+
+  console.log(
+    "[Renderer] onlineUsers após user_offline:",
+    appState.getOnlineUsers()
+  );
 
   showChat();
 });

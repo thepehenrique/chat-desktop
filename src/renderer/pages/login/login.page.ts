@@ -3,10 +3,10 @@ export class LoginPage {
     container.innerHTML = `
       <main class="app">
         <section class="login">
-          <h1>Chat Desktop</h1>
+          <h1>DeskChat</h1>
 
           <p>
-            Entre para continuar
+            Valorizamos a sua privacidade
           </p>
 
           <form id="login-form">

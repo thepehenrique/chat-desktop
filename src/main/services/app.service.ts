@@ -20,14 +20,22 @@ export class AppService {
     const refreshed = await this.authService.refresh();
 
     if (!refreshed) {
+      await this.sessionService.clear();
+
       return null;
     }
 
-    const user = await this.authService.me();
+    try {
+      const user = await this.authService.me();
 
-    this.authenticatedUser = user;
+      this.authenticatedUser = user;
 
-    return user;
+      return user;
+    } catch {
+      await this.sessionService.clear();
+
+      return null;
+    }
   }
 
   setAuthenticatedUser(user: AuthenticatedUser): void {

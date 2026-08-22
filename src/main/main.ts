@@ -72,18 +72,8 @@ ipcMain.handle("auth:refresh", async () => {
   return authService.refresh();
 });
 
-app.whenReady().then(async () => {
+app.whenReady().then(() => {
   createWindow();
-
-  try {
-    const user = await appService.initialize();
-
-    if (user) {
-      socketService.connect();
-    }
-  } catch (error) {
-    console.error("Erro ao restaurar sessão:", error);
-  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
