@@ -7,6 +7,17 @@ import { TokenStorage } from "./storage/token.storage.js";
 import { AppService } from "./services/app.service.js";
 import { SocketService } from "./services/socket.service.js";
 import { UserService } from "./services/user.service.js";
+import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface.js";
+
+type LoginResult =
+  | {
+      success: true;
+      user: AuthenticatedUser;
+    }
+  | {
+      success: false;
+      message: string;
+    };
 
 const isDevelopment = !app.isPackaged;
 const tokenStorage = new TokenStorage();
@@ -55,16 +66,33 @@ ipcMain.handle("ping", () => {
 
 ipcMain.handle(
   "auth:login",
-  async (_event, email: string, password: string) => {
-    await authService.login(email, password);
+  async (_event, email: string, password: string): Promise<LoginResult> => {
+    try {
+      await authService.login(email, password);
 
-    const user = await authService.me();
+      const user = await authService.me();
 
-    appService.setAuthenticatedUser(user);
+      appService.setAuthenticatedUser(user);
 
-    socketService.connect();
+      socketService.connect();
 
-    return user;
+      return {
+        success: true,
+        user,
+      };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "E-mail ou senha incorretos."
+      ) {
+        return {
+          success: false,
+          message: error.message,
+        };
+      }
+
+      throw error;
+    }
   }
 );
 

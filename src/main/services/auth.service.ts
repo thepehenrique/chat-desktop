@@ -1,8 +1,8 @@
 import "dotenv/config";
 
-import { SessionService } from "./session.service.js";
 import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
 import { LoginResponse } from "../interface/login-response.interface.js";
+import { SessionService } from "./session.service.js";
 
 const API_URL = process.env.API_URL;
 
@@ -24,6 +24,10 @@ export class AuthService {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("E-mail ou senha incorretos.");
+      }
+
       throw new Error("Não foi possível realizar o login.");
     }
 

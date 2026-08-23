@@ -7,7 +7,19 @@ declare global {
       ping: () => Promise<string>;
 
       auth: {
-        login: (email: string, password: string) => Promise<AuthenticatedUser>;
+        login: (
+          email: string,
+          password: string
+        ) => Promise<
+          | {
+              success: true;
+              user: AuthenticatedUser;
+            }
+          | {
+              success: false;
+              message: string;
+            }
+        >;
 
         register: (
           name: string,

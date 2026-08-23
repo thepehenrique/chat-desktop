@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface";
 
 contextBridge.exposeInMainWorld("api", {
   ping: (): Promise<string> => {
@@ -6,7 +7,19 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   auth: {
-    login: (email: string, password: string) => {
+    login: (
+      email: string,
+      password: string
+    ): Promise<
+      | {
+          success: true;
+          user: AuthenticatedUser;
+        }
+      | {
+          success: false;
+          message: string;
+        }
+    > => {
       return ipcRenderer.invoke("auth:login", email, password);
     },
 

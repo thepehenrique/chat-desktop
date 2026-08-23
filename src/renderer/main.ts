@@ -20,19 +20,19 @@ const showLogin = (): void => {
 
   loginPage.bindEvents(
     async (email, password) => {
-      try {
-        const user = await window.api.auth.login(email, password);
+      const result = await window.api.auth.login(email, password);
 
-        appState.setAuthenticatedUser(user);
-
-        const users = await window.api.users.findAll();
-
-        appState.setUsers(users);
-
-        showChat();
-      } catch (error) {
-        console.error("Erro ao realizar login:", error);
+      if (!result.success) {
+        throw new Error(result.message);
       }
+
+      appState.setAuthenticatedUser(result.user);
+
+      const users = await window.api.users.findAll();
+
+      appState.setUsers(users);
+
+      showChat();
     },
 
     () => {

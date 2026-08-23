@@ -3,6 +3,7 @@ export class LoginPage {
     container.innerHTML = `
       <main class="app">
         <section class="login">
+
           <h1>Chat Desktop</h1>
 
           <p>
@@ -27,6 +28,12 @@ export class LoginPage {
               required
             />
 
+            <p
+              id="login-error"
+              class="login__error"
+              role="alert"
+            ></p>
+
             <button
               id="login-button"
               type="submit"
@@ -49,6 +56,7 @@ export class LoginPage {
           >
             Criar uma conta
           </button>
+
         </section>
       </main>
     `;
@@ -90,11 +98,14 @@ export class LoginPage {
       event.preventDefault();
 
       const emailValue = email.value.trim();
+
       const passwordValue = password.value;
 
       if (!emailValue || !passwordValue) {
         return;
       }
+
+      this.clearError();
 
       this.setLoading(true);
 
@@ -103,7 +114,11 @@ export class LoginPage {
       } catch (error) {
         this.setLoading(false);
 
-        throw error;
+        if (error instanceof Error) {
+          this.showError(error.message);
+        } else {
+          this.showError("Não foi possível realizar o login.");
+        }
       }
     });
 
@@ -123,5 +138,31 @@ export class LoginPage {
     loginButton.disabled = loading;
 
     loginButton.classList.toggle("is-loading", loading);
+  }
+
+  private showError(message: string): void {
+    const errorElement =
+      document.querySelector<HTMLParagraphElement>("#login-error");
+
+    if (!errorElement) {
+      return;
+    }
+
+    errorElement.textContent = message;
+
+    errorElement.style.display = "block";
+  }
+
+  private clearError(): void {
+    const errorElement =
+      document.querySelector<HTMLParagraphElement>("#login-error");
+
+    if (!errorElement) {
+      return;
+    }
+
+    errorElement.textContent = "";
+
+    errorElement.style.display = "none";
   }
 }
