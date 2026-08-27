@@ -9,11 +9,21 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) {
   throw new Error("Elemento #app não encontrado.");
 }
+
 const appState = new AppState();
+
 const loginPage = new LoginPage();
 const chatPage = new ChatPage();
 const registerPage = new RegisterPage();
 const verifyEmailPage = new VerifyEmailPage();
+
+const notificationSound = new Audio("./assets/popup.mp3");
+
+notificationSound.volume = 0.25;
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
 
 const showLogin = (): void => {
   loginPage.render(app);
@@ -41,24 +51,47 @@ const showLogin = (): void => {
   );
 };
 
+/* ============================================================
+   CHAT
+   ============================================================ */
+
 const showChat = (): void => {
   const user = appState.getAuthenticatedUser();
 
   if (!user) {
     showLogin();
+
     return;
   }
 
   chatPage.render(
     app,
+
     user,
+
     appState.getUsers(),
+
     appState.getSelectedUser(),
+
     appState.getMessages(),
 
+    // Usuário online
     (userId) => appState.isUserOnline(userId),
 
+    // Mensagens não lidas
     (userId) => appState.getUnreadMessages(userId),
+
+    // Status da chamada
+    appState.getCallStatus(),
+
+    // Usuário da chamada
+    appState.getCallUser(),
+
+    appState.getCallStartedAt(),
+
+    /* ========================================================
+       SELECIONAR USUÁRIO
+       ======================================================== */
 
     (selectedUser) => {
       appState.setSelectedUser(selectedUser);
@@ -67,6 +100,10 @@ const showChat = (): void => {
 
       showChat();
     },
+
+    /* ========================================================
+       ENVIAR MENSAGEM
+       ======================================================== */
 
     async (receiverId, content) => {
       await window.api.socket.sendMessage(receiverId, content);
@@ -80,6 +117,116 @@ const showChat = (): void => {
       showChat();
     },
 
+    /* ========================================================
+       INICIAR CHAMADA
+       ======================================================== */
+
+    async (selectedUser) => {
+      appState.setCallStatus("calling");
+
+      appState.setCallUser(selectedUser);
+
+      try {
+        await window.api.socket.callRequest(selectedUser.id);
+
+        console.log("[Renderer] Ligando para:", selectedUser.name);
+
+        showChat();
+      } catch (error) {
+        console.error("[Renderer] Erro ao iniciar chamada:", error);
+
+        appState.clearCall();
+
+        showChat();
+      }
+    },
+
+    /* ========================================================
+       CANCELAR CHAMADA
+       ======================================================== */
+
+    async () => {
+      console.log("[Renderer] Cancelando chamada.");
+
+      appState.clearCall();
+
+      showChat();
+    },
+
+    /* ========================================================
+       ACEITAR CHAMADA
+       ======================================================== */
+
+    async () => {
+      const callUser = appState.getCallUser();
+
+      if (!callUser) {
+        return;
+      }
+
+      try {
+        await window.api.socket.callAccepted(callUser.id);
+
+        appState.setCallStatus("connected");
+
+        appState.setCallStartedAt();
+
+        showChat();
+      } catch (error) {
+        console.error("[Renderer] Erro ao aceitar chamada:", error);
+
+        appState.clearCall();
+
+        showChat();
+      }
+    },
+
+    /* ========================================================
+       RECUSAR CHAMADA
+       ======================================================== */
+
+    async () => {
+      const callUser = appState.getCallUser();
+
+      if (!callUser) {
+        console.error("[Renderer] Usuário da chamada não encontrado.");
+
+        return;
+      }
+
+      try {
+        await window.api.socket.callRejected(callUser.id);
+
+        appState.clearCall();
+
+        console.log("[Renderer] Chamada recusada:", callUser.name);
+
+        showChat();
+      } catch (error) {
+        console.error("[Renderer] Erro ao recusar chamada:", error);
+
+        appState.clearCall();
+
+        showChat();
+      }
+    },
+
+    /* ========================================================
+       DESLIGAR CHAMADA
+       ======================================================== */
+
+    async () => {
+      console.log("[Renderer] Desligando chamada.");
+
+      appState.clearCall();
+
+      showChat();
+    },
+
+    /* ========================================================
+       LOGOUT
+       ======================================================== */
+
     async () => {
       await window.api.auth.logout();
 
@@ -89,6 +236,10 @@ const showChat = (): void => {
     }
   );
 };
+
+/* ============================================================
+   PRESENCE
+   ============================================================ */
 
 window.api.socket.onOnlineUsers(({ userIds }) => {
   console.log("[Renderer] online_users recebido:", userIds);
@@ -126,6 +277,10 @@ window.api.socket.onUserOffline(({ userId }) => {
   showChat();
 });
 
+/* ============================================================
+   MESSAGES
+   ============================================================ */
+
 window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
   appState.addMessage({
     senderId,
@@ -148,9 +303,71 @@ window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
   showChat();
 });
 
-const notificationSound = new Audio("./assets/popup.mp3");
+/* ============================================================
+   INCOMING CALL
+   ============================================================ */
 
-notificationSound.volume = 0.25;
+window.api.socket.onIncomingCall(({ callerId }) => {
+  console.log("[Renderer] incoming_call:", callerId);
+
+  const caller = appState.getUsers().find((user) => user.id === callerId);
+
+  if (!caller) {
+    console.error("[Renderer] Usuário da chamada não encontrado:", callerId);
+
+    return;
+  }
+
+  appState.setCallStatus("incoming");
+
+  appState.setCallUser(caller);
+
+  console.log("[Renderer] Chamada recebida de:", caller.name);
+
+  showChat();
+});
+
+/* ============================================================
+   CALL ACCEPTED
+   ============================================================ */
+
+window.api.socket.onCallAccepted(({ receiverId }) => {
+  console.log("[Renderer] call_accepted:", receiverId);
+
+  const receiver = appState.getUsers().find((user) => user.id === receiverId);
+
+  if (!receiver) {
+    return;
+  }
+
+  appState.setCallStatus("connected");
+
+  appState.setCallUser(receiver);
+
+  appState.setCallStartedAt();
+
+  console.log("[Renderer] Chamada aceita por:", receiver.name);
+
+  showChat();
+});
+
+/* ============================================================
+   CALL REJECTED
+   ============================================================ */
+
+window.api.socket.onCallRejected(({ receiverId }) => {
+  console.log("[Renderer] call_rejected:", receiverId);
+
+  appState.clearCall();
+
+  console.log("[Renderer] Chamada recusada por:", receiverId);
+
+  showChat();
+});
+
+/* ============================================================
+   REGISTER
+   ============================================================ */
 
 const showRegister = (): void => {
   registerPage.render(app);
@@ -173,6 +390,10 @@ const showRegister = (): void => {
     }
   );
 };
+
+/* ============================================================
+   VERIFY EMAIL
+   ============================================================ */
 
 const showVerifyEmail = (email: string): void => {
   verifyEmailPage.render(app, email);
@@ -205,5 +426,9 @@ const showVerifyEmail = (email: string): void => {
     }
   );
 };
+
+/* ============================================================
+   START APPLICATION
+   ============================================================ */
 
 showLogin();

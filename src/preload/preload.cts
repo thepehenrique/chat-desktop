@@ -115,6 +115,69 @@ contextBridge.exposeInMainWorld("api", {
         callback(data);
       });
     },
+
+    onIncomingCall: (
+      callback: (data: { callerId: number }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: { callerId: number }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:incoming-call", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:incoming-call", listener);
+      };
+    },
+
+    onCallAccepted: (
+      callback: (data: { receiverId: number }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: { receiverId: number }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:call-accepted", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:call-accepted", listener);
+      };
+    },
+
+    onCallRejected: (
+      callback: (data: { receiverId: number }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: { receiverId: number }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:call-rejected", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:call-rejected", listener);
+      };
+    },
+
+    callRequest: (receiverId: number): Promise<void> => {
+      return ipcRenderer.invoke("socket:call-request", receiverId);
+    },
+
+    callAccepted: (receiverId: number): Promise<void> => {
+      return ipcRenderer.invoke("socket:call-accepted", receiverId);
+    },
+
+    callRejected: (receiverId: number): Promise<void> => {
+      return ipcRenderer.invoke("socket:call-rejected", receiverId);
+    },
   },
 
   users: {

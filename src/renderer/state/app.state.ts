@@ -2,6 +2,7 @@ import { AuthenticatedUser } from "../../commom/interface/authenticated-user.int
 import { ChatMessage } from "../interface/chat-message.interface.js";
 import { User } from "../interface/user.interface.js";
 
+export type CallStatus = "idle" | "calling" | "incoming" | "connected";
 export class AppState {
   private authenticatedUser: AuthenticatedUser | null = null;
 
@@ -13,7 +14,13 @@ export class AppState {
 
   private messages: ChatMessage[] = [];
 
+  private callStatus: CallStatus = "idle";
+
+  private callUser: User | null = null;
+
   private unreadMessages = new Map<number, number>();
+
+  private callStartedAt: number | null = null;
 
   setAuthenticatedUser(user: AuthenticatedUser): void {
     this.authenticatedUser = user;
@@ -85,11 +92,42 @@ export class AppState {
     this.unreadMessages.delete(userId);
   }
 
+  setCallStartedAt(): void {
+    this.callStartedAt = Date.now();
+  }
+
+  getCallStartedAt(): number | null {
+    return this.callStartedAt;
+  }
+
+  setCallStatus(status: CallStatus): void {
+    this.callStatus = status;
+  }
+
+  getCallStatus(): CallStatus {
+    return this.callStatus;
+  }
+
+  setCallUser(user: User | null): void {
+    this.callUser = user;
+  }
+
+  getCallUser(): User | null {
+    return this.callUser;
+  }
+
+  clearCall(): void {
+    this.callStatus = "idle";
+    this.callUser = null;
+    this.callStartedAt = null;
+  }
+
   clear(): void {
     this.authenticatedUser = null;
     this.users = [];
     this.onlineUsers.clear();
     this.selectedUser = null;
     this.messages = [];
+    this.clearCall();
   }
 }

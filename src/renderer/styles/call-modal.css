@@ -1,0 +1,215 @@
+/* 
+
+#call-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+}
+
+.call-modal__overlay {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.call-modal__content {
+  width: 360px;
+
+  padding: 32px;
+
+  text-align: center;
+
+  background: #171a21;
+
+  border: 1px solid #252a34;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.call-modal__icon {
+  font-size: 42px;
+
+  margin-bottom: 16px;
+}
+
+.call-modal__content h2 {
+  margin: 0;
+
+  color: #f1f3f5;
+
+  font-size: 22px;
+}
+
+.call-modal__content p {
+  margin: 10px 0 24px;
+
+  color: #8f96a3;
+
+  font-size: 14px;
+}
+
+.call-modal__actions {
+  display: flex;
+
+  gap: 12px;
+}
+
+.call-modal__actions button {
+  flex: 1;
+
+  height: 44px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+#call-reject-button {
+  background: #2a303b;
+
+  color: #f1f3f5;
+}
+
+#call-accept-button {
+  background: #6c7cff;
+
+  color: #ffffff;
+} */
+
+.call-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.55);
+
+  z-index: 1000;
+}
+
+.call-modal {
+  width: 360px;
+
+  padding: 32px;
+
+  text-align: center;
+
+  background: #171a21;
+
+  border: 1px solid #252a34;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.call-modal__icon {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 64px;
+
+  height: 64px;
+
+  margin: 0 auto 20px;
+
+  border-radius: 50%;
+
+  background: #252a34;
+
+  font-size: 28px;
+}
+
+.call-modal h2 {
+  margin: 0;
+
+  color: #f1f3f5;
+
+  font-size: 20px;
+}
+
+.call-modal p {
+  margin: 8px 0 24px;
+
+  color: #8f96a3;
+
+  font-size: 14px;
+}
+
+.call-modal__actions {
+  display: flex;
+
+  gap: 12px;
+}
+
+.call-modal__button {
+  flex: 1;
+
+  height: 44px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
+}
+
+.call-modal__button:hover {
+  opacity: 0.9;
+}
+
+.call-modal__button:active {
+  transform: scale(0.98);
+}
+
+.call-modal__button--danger {
+  background: #dc3545;
+
+  color: #fff;
+}
+
+.call-modal__button--success {
+  background: #22c55e;
+
+  color: #fff;
+}
+
+.call-modal__timer {
+  display: block;
+
+  margin-bottom: 24px;
+
+  color: #8f96a3;
+
+  font-size: 14px;
+}

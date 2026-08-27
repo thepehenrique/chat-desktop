@@ -1,8 +1,11 @@
 import { AuthenticatedUser } from "../../../commom/interface/authenticated-user.interface";
 import { ChatMessage } from "../../interface/chat-message.interface";
 import { User } from "../../interface/user.interface";
+import { CallStatus } from "../../state/app.state";
 
 export class ChatPage {
+  private callTimerInterval: number | null = null;
+
   render(
     container: HTMLElement,
     user: AuthenticatedUser,
@@ -11,8 +14,16 @@ export class ChatPage {
     messages: ChatMessage[],
     isUserOnline: (userId: number) => boolean,
     getUnreadMessages: (userId: number) => number,
+    callStatus: CallStatus,
+    callUser: User | null,
+    callStartedAt: number | null,
     onSelectUser: (user: User) => void,
     onSendMessage: (receiverId: number, content: string) => Promise<void>,
+    onCall: (user: User) => Promise<void>,
+    onCancelCall: () => Promise<void>,
+    onAcceptCall: () => Promise<void>,
+    onRejectCall: () => Promise<void>,
+    onEndCall: () => Promise<void>,
     onLogout: () => Promise<void>
   ): void {
     const availableUsers = users.filter((item) => item.id !== user.id);
@@ -139,6 +150,8 @@ export class ChatPage {
           </div>
         `;
 
+    const callModal = this.renderCallModal(callStatus, callUser);
+
     container.innerHTML = `
       <main class="chat">
 
@@ -194,13 +207,33 @@ export class ChatPage {
 
             <h2>${chatTitle}</h2>
 
-            <button
-              id="logout-button"
-              class="chat__logout"
-              type="button"
-            >
-              Logout
-            </button>
+            <div class="chat__actions">
+
+              ${
+                selectedUser
+                  ? `
+                    <button
+                      id="call-button"
+                      class="chat__call"
+                      type="button"
+                    >
+                      <span>📞</span>
+                      Ligar
+                    </button>
+                  `
+                  : ""
+              }
+
+              <button
+                id="logout-button"
+                class="chat__logout"
+                type="button"
+              >
+                <span>↪</span>
+                Logout
+              </button>
+
+            </div>
 
           </header>
 
@@ -211,11 +244,29 @@ export class ChatPage {
         </section>
 
       </main>
+
+      ${callModal}
     `;
 
     this.bindUserSelection(users, isUserOnline, onSelectUser);
 
     this.bindMessageForm(selectedUser, onSendMessage);
+
+    this.bindCallButton(selectedUser, onCall);
+
+    this.bindCallActions(
+      callStatus,
+      onCancelCall,
+      onAcceptCall,
+      onRejectCall,
+      onEndCall
+    );
+
+    if (callStatus === "connected" && callStartedAt !== null) {
+      this.startCallTimer(callStartedAt);
+    } else {
+      this.stopCallTimer();
+    }
 
     this.bindLogout(onLogout);
   }
@@ -285,6 +336,26 @@ export class ChatPage {
     });
   }
 
+  private bindCallButton(
+    selectedUser: User | null,
+    onCall: (user: User) => Promise<void>
+  ): void {
+    const callButton =
+      document.querySelector<HTMLButtonElement>("#call-button");
+
+    if (!callButton || !selectedUser) {
+      return;
+    }
+
+    callButton.addEventListener("click", async () => {
+      try {
+        await onCall(selectedUser);
+      } catch (error) {
+        console.error("[ChatPage] Erro ao iniciar chamada:", error);
+      }
+    });
+  }
+
   private bindLogout(onLogout: () => Promise<void>): void {
     const logoutButton =
       document.querySelector<HTMLButtonElement>("#logout-button");
@@ -292,5 +363,234 @@ export class ChatPage {
     logoutButton?.addEventListener("click", async () => {
       await onLogout();
     });
+  }
+
+  private renderCallModal(
+    callStatus: CallStatus,
+    callUser: User | null
+  ): string {
+    if (callStatus === "idle" || !callUser) {
+      return "";
+    }
+
+    if (callStatus === "calling") {
+      return `
+      <div class="call-overlay">
+
+        <div class="call-modal">
+
+          <div class="call-modal__icon">
+            📞
+          </div>
+
+          <h2>
+            Ligando...
+          </h2>
+
+          <p>
+            ${callUser.name}
+          </p>
+
+          <button
+            id="cancel-call-button"
+            class="call-modal__button call-modal__button--danger"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+        </div>
+
+      </div>
+    `;
+    }
+
+    if (callStatus === "incoming") {
+      return `
+      <div class="call-overlay">
+
+        <div class="call-modal">
+
+          <div class="call-modal__icon">
+            📞
+          </div>
+
+          <h2>
+            Chamada recebida
+          </h2>
+
+          <p>
+            ${callUser.name} está ligando...
+          </p>
+
+          <div class="call-modal__actions">
+
+            <button
+              id="reject-call-button"
+              class="call-modal__button call-modal__button--danger"
+              type="button"
+            >
+              Recusar
+            </button>
+
+            <button
+              id="accept-call-button"
+              class="call-modal__button call-modal__button--success"
+              type="button"
+            >
+              Aceitar
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+    }
+
+    if (callStatus === "connected") {
+      return `
+      <div class="call-overlay">
+
+        <div class="call-modal">
+
+          <div class="call-modal__icon">
+            📞
+          </div>
+
+          <h2>
+            Em chamada
+          </h2>
+
+          <p>
+            ${callUser.name}
+          </p>
+
+          <span
+            id="call-timer"
+            class="call-modal__timer"
+          >
+            00:00
+          </span>
+
+          <button
+            id="end-call-button"
+            class="call-modal__button call-modal__button--danger"
+            type="button"
+          >
+            Desligar
+          </button>
+
+        </div>
+
+      </div>
+    `;
+    }
+
+    return "";
+  }
+
+  private bindCallActions(
+    callStatus: CallStatus,
+    onCancelCall: () => Promise<void>,
+    onAcceptCall: () => Promise<void>,
+    onRejectCall: () => Promise<void>,
+    onEndCall: () => Promise<void>
+  ): void {
+    if (callStatus === "calling") {
+      const button = document.querySelector<HTMLButtonElement>(
+        "#cancel-call-button"
+      );
+
+      button?.addEventListener("click", async () => {
+        try {
+          await onCancelCall();
+        } catch (error) {
+          console.error("[ChatPage] Erro ao cancelar chamada:", error);
+        }
+      });
+
+      return;
+    }
+
+    if (callStatus === "incoming") {
+      const acceptButton = document.querySelector<HTMLButtonElement>(
+        "#accept-call-button"
+      );
+
+      const rejectButton = document.querySelector<HTMLButtonElement>(
+        "#reject-call-button"
+      );
+
+      acceptButton?.addEventListener("click", async () => {
+        try {
+          await onAcceptCall();
+        } catch (error) {
+          console.error("[ChatPage] Erro ao aceitar chamada:", error);
+        }
+      });
+
+      rejectButton?.addEventListener("click", async () => {
+        try {
+          await onRejectCall();
+        } catch (error) {
+          console.error("[ChatPage] Erro ao recusar chamada:", error);
+        }
+      });
+
+      return;
+    }
+
+    if (callStatus === "connected") {
+      const button =
+        document.querySelector<HTMLButtonElement>("#end-call-button");
+
+      button?.addEventListener("click", async () => {
+        try {
+          await onEndCall();
+        } catch (error) {
+          console.error("[ChatPage] Erro ao desligar chamada:", error);
+        }
+      });
+    }
+  }
+
+  private stopCallTimer(): void {
+    if (this.callTimerInterval === null) {
+      return;
+    }
+
+    window.clearInterval(this.callTimerInterval);
+
+    this.callTimerInterval = null;
+  }
+
+  private startCallTimer(callStartedAt: number): void {
+    this.stopCallTimer();
+
+    const updateTimer = (): void => {
+      const timer = document.querySelector<HTMLSpanElement>("#call-timer");
+
+      if (!timer) {
+        return;
+      }
+
+      const elapsed = Date.now() - callStartedAt;
+
+      const totalSeconds = Math.floor(elapsed / 1000);
+
+      const minutes = Math.floor(totalSeconds / 60);
+
+      const seconds = totalSeconds % 60;
+
+      timer.textContent =
+        `${String(minutes).padStart(2, "0")}:` +
+        `${String(seconds).padStart(2, "0")}`;
+    };
+
+    updateTimer();
+
+    this.callTimerInterval = window.setInterval(updateTimer, 1000);
   }
 }

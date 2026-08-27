@@ -175,25 +175,53 @@
    LOGOUT
    ============================== */
 
+.chat__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Botão de ligação */
+
+.chat__call,
 .chat__logout {
-  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   height: 34px;
-
-  padding: 0 14px;
-
+  padding: 0 13px;
+  border: none;
   border-radius: 7px;
-
-  background: #dc2626;
-  color: #ffffff;
-
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
-
   transition:
     background 0.2s ease,
-    transform 0.1s ease;
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+}
+
+.chat__call {
+  background: #6c7cff;
+  color: #ffffff;
+}
+
+.chat__call:hover {
+  background: #5968e8;
+  box-shadow: 0 2px 6px rgba(108, 124, 255, 0.25);
+}
+
+.chat__call:active {
+  transform: scale(0.96);
+}
+
+/* Logout */
+
+.chat__logout {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .chat__logout:hover {
@@ -201,7 +229,15 @@
 }
 
 .chat__logout:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+}
+
+/* Ícones */
+
+.chat__call span,
+.chat__logout span {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* ==============================

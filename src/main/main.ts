@@ -161,3 +161,15 @@ ipcMain.handle("auth:logout", async () => {
 
   return true;
 });
+
+ipcMain.handle("socket:call-request", async (_event, receiverId: number) => {
+  socketService.requestCall(receiverId);
+});
+
+ipcMain.handle("socket:call-accepted", async (_event, receiverId: number) => {
+  socketService.acceptCall(receiverId);
+});
+
+ipcMain.handle("socket:call-rejected", async (_event, receiverId: number) => {
+  socketService.rejectCall(receiverId);
+});

@@ -34,6 +34,7 @@ export class SocketService {
     this.registerConnectionEvents();
     this.registerPresenceEvents(this.socket);
     this.registerMessageEvents(this.socket);
+    this.registerCallEvents();
   }
 
   private registerConnectionEvents(): void {
@@ -133,5 +134,59 @@ export class SocketService {
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(channel, payload);
     }
+  }
+
+  private registerCallEvents(): void {
+    if (!this.socket) {
+      return;
+    }
+
+    this.socket.on("incoming_call", (data: { callerId: number }) => {
+      console.log("[SocketService] incoming_call:", data);
+
+      this.emitToRenderer("socket:incoming-call", data);
+    });
+
+    this.socket.on("call_accepted", (data: { receiverId: number }) => {
+      console.log("[SocketService] call_accepted:", data);
+
+      this.emitToRenderer("socket:call-accepted", data);
+    });
+
+    this.socket.on("call_rejected", (data: { receiverId: number }) => {
+      console.log("[SocketService] call_rejected:", data);
+
+      this.emitToRenderer("socket:call-rejected", data);
+    });
+  }
+
+  requestCall(receiverId: number): void {
+    if (!this.socket?.connected) {
+      throw new Error("Socket.IO não está conectado.");
+    }
+
+    this.socket.emit("call_request", {
+      receiverId,
+    });
+  }
+
+  acceptCall(receiverId: number): void {
+    if (!this.socket?.connected) {
+      throw new Error("Socket.IO não está conectado.");
+    }
+
+    this.socket.emit("call_accepted", {
+      receiverId,
+    });
+  }
+
+  rejectCall(receiverId: number): void {
+    if (!this.socket?.connected) {
+      throw new Error("Socket.IO não está conectado.");
+    }
+
+    this.socket.emit("call_rejected", {
+      receiverId,
+    });
   }
 }

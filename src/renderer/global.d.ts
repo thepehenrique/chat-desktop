@@ -58,6 +58,24 @@ declare global {
             content: string;
           }) => void
         ) => void;
+
+        callRequest: (receiverId: number) => Promise<void>;
+
+        callAccepted: (receiverId: number) => Promise<void>;
+
+        callRejected: (receiverId: number) => Promise<void>;
+
+        onIncomingCall: (
+          callback: (data: { callerId: number }) => void
+        ) => () => void;
+
+        onCallAccepted: (
+          callback: (data: { receiverId: number }) => void
+        ) => () => void;
+
+        onCallRejected: (
+          callback: (data: { receiverId: number }) => void
+        ) => () => void;
       };
 
       users: {
