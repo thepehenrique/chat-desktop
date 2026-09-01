@@ -1,12 +1,14 @@
 import "dotenv/config";
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
+
 import { AuthService } from "./services/auth.service.js";
 import { SessionService } from "./services/session.service.js";
 import { TokenStorage } from "./storage/token.storage.js";
 import { AppService } from "./services/app.service.js";
 import { SocketService } from "./services/socket.service.js";
 import { UserService } from "./services/user.service.js";
+
 import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface.js";
 
 type LoginResult =
@@ -20,6 +22,7 @@ type LoginResult =
     };
 
 const isDevelopment = !app.isPackaged;
+
 const tokenStorage = new TokenStorage();
 
 const sessionService = new SessionService(tokenStorage);
@@ -64,6 +67,8 @@ ipcMain.handle("ping", () => {
   return "pong from main";
 });
 
+// auth
+
 ipcMain.handle(
   "auth:login",
   async (_event, email: string, password: string): Promise<LoginResult> => {
@@ -100,31 +105,12 @@ ipcMain.handle("auth:refresh", async () => {
   return authService.refresh();
 });
 
-app.whenReady().then(() => {
-  createWindow();
+ipcMain.handle("auth:logout", async () => {
+  socketService.disconnect();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+  await appService.logout();
 
-ipcMain.handle("users:find-all", async () => {
-  return userService.findAll();
-});
-
-ipcMain.handle(
-  "socket:send-message",
-  async (_event, receiverId: number, content: string) => {
-    socketService.sendMessage(receiverId, content);
-  }
-);
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  return true;
 });
 
 ipcMain.handle(
@@ -154,14 +140,20 @@ ipcMain.handle("auth:resend-verification", async (_event, email: string) => {
   });
 });
 
-ipcMain.handle("auth:logout", async () => {
-  socketService.disconnect();
+// users
 
-  await appService.logout();
-
-  return true;
+ipcMain.handle("users:find-all", async () => {
+  return userService.findAll();
 });
 
+ipcMain.handle(
+  "socket:send-message",
+  async (_event, receiverId: number, content: string) => {
+    socketService.sendMessage(receiverId, content);
+  }
+);
+
+// socket
 ipcMain.handle("socket:call-request", async (_event, receiverId: number) => {
   socketService.requestCall(receiverId);
 });
@@ -172,4 +164,49 @@ ipcMain.handle("socket:call-accepted", async (_event, receiverId: number) => {
 
 ipcMain.handle("socket:call-rejected", async (_event, receiverId: number) => {
   socketService.rejectCall(receiverId);
+});
+
+ipcMain.handle("socket:call-ended", async (_event, receiverId: number) => {
+  socketService.endCall(receiverId);
+});
+
+// web rtc
+
+ipcMain.handle(
+  "socket:webrtc-offer",
+  async (_event, receiverId: number, offer: RTCSessionDescriptionInit) => {
+    socketService.sendWebRTCOffer(receiverId, offer);
+  }
+);
+
+ipcMain.handle(
+  "socket:webrtc-answer",
+  async (_event, receiverId: number, answer: RTCSessionDescriptionInit) => {
+    socketService.sendWebRTCAnswer(receiverId, answer);
+  }
+);
+
+ipcMain.handle(
+  "socket:webrtc-ice-candidate",
+  async (_event, receiverId: number, candidate: RTCIceCandidateInit) => {
+    socketService.sendWebRTCIceCandidate(receiverId, candidate);
+  }
+);
+
+// app
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });

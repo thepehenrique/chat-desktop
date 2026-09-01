@@ -110,10 +110,23 @@ contextBridge.exposeInMainWorld("api", {
         receiverId: number;
         content: string;
       }) => void
-    ): void => {
-      ipcRenderer.on("socket:new-message", (_event, data) => {
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          senderId: number;
+          receiverId: number;
+          content: string;
+        }
+      ) => {
         callback(data);
-      });
+      };
+
+      ipcRenderer.on("socket:new-message", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:new-message", listener);
+      };
     },
 
     onIncomingCall: (
@@ -121,7 +134,9 @@ contextBridge.exposeInMainWorld("api", {
     ): (() => void) => {
       const listener = (
         _event: Electron.IpcRendererEvent,
-        data: { callerId: number }
+        data: {
+          callerId: number;
+        }
       ) => {
         callback(data);
       };
@@ -138,7 +153,9 @@ contextBridge.exposeInMainWorld("api", {
     ): (() => void) => {
       const listener = (
         _event: Electron.IpcRendererEvent,
-        data: { receiverId: number }
+        data: {
+          receiverId: number;
+        }
       ) => {
         callback(data);
       };
@@ -155,7 +172,9 @@ contextBridge.exposeInMainWorld("api", {
     ): (() => void) => {
       const listener = (
         _event: Electron.IpcRendererEvent,
-        data: { receiverId: number }
+        data: {
+          receiverId: number;
+        }
       ) => {
         callback(data);
       };
@@ -164,6 +183,25 @@ contextBridge.exposeInMainWorld("api", {
 
       return () => {
         ipcRenderer.removeListener("socket:call-rejected", listener);
+      };
+    },
+
+    onCallEnded: (
+      callback: (data: { userId: number }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          userId: number;
+        }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:call-ended", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:call-ended", listener);
       };
     },
 
@@ -177,6 +215,104 @@ contextBridge.exposeInMainWorld("api", {
 
     callRejected: (receiverId: number): Promise<void> => {
       return ipcRenderer.invoke("socket:call-rejected", receiverId);
+    },
+
+    callEnded: (receiverId: number): Promise<void> => {
+      return ipcRenderer.invoke("socket:call-ended", receiverId);
+    },
+
+    sendWebRTCOffer: (
+      receiverId: number,
+      offer: RTCSessionDescriptionInit
+    ): Promise<void> => {
+      return ipcRenderer.invoke("socket:webrtc-offer", receiverId, offer);
+    },
+
+    onWebRTCOffer: (
+      callback: (data: {
+        callerId: number;
+        offer: RTCSessionDescriptionInit;
+      }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          callerId: number;
+          offer: RTCSessionDescriptionInit;
+        }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:webrtc-offer", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:webrtc-offer", listener);
+      };
+    },
+
+    sendWebRTCAnswer: (
+      receiverId: number,
+      answer: RTCSessionDescriptionInit
+    ): Promise<void> => {
+      return ipcRenderer.invoke("socket:webrtc-answer", receiverId, answer);
+    },
+
+    onWebRTCAnswer: (
+      callback: (data: {
+        receiverId: number;
+        answer: RTCSessionDescriptionInit;
+      }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          receiverId: number;
+          answer: RTCSessionDescriptionInit;
+        }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:webrtc-answer", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:webrtc-answer", listener);
+      };
+    },
+
+    sendWebRTCIceCandidate: (
+      receiverId: number,
+      candidate: RTCIceCandidateInit
+    ): Promise<void> => {
+      return ipcRenderer.invoke(
+        "socket:webrtc-ice-candidate",
+        receiverId,
+        candidate
+      );
+    },
+
+    onWebRTCIceCandidate: (
+      callback: (data: {
+        senderId: number;
+        candidate: RTCIceCandidateInit;
+      }) => void
+    ): (() => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        data: {
+          senderId: number;
+          candidate: RTCIceCandidateInit;
+        }
+      ) => {
+        callback(data);
+      };
+
+      ipcRenderer.on("socket:webrtc-ice-candidate", listener);
+
+      return () => {
+        ipcRenderer.removeListener("socket:webrtc-ice-candidate", listener);
+      };
     },
   },
 

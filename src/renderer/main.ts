@@ -3,6 +3,7 @@ import { ChatPage } from "./pages/chat/chat.page.js";
 import { AppState } from "./state/app.state.js";
 import { RegisterPage } from "./pages/register/register.page.js";
 import { VerifyEmailPage } from "./pages/verify-email/verify-email.page.js";
+import { WebRTCService } from "./services/web-rtc.service.js";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -11,7 +12,7 @@ if (!app) {
 }
 
 const appState = new AppState();
-
+const webRTCService = new WebRTCService();
 const loginPage = new LoginPage();
 const chatPage = new ChatPage();
 const registerPage = new RegisterPage();
@@ -20,10 +21,6 @@ const verifyEmailPage = new VerifyEmailPage();
 const notificationSound = new Audio("./assets/popup.mp3");
 
 notificationSound.volume = 0.25;
-
-/* ============================================================
-   LOGIN
-   ============================================================ */
 
 const showLogin = (): void => {
   loginPage.render(app);
@@ -51,10 +48,6 @@ const showLogin = (): void => {
   );
 };
 
-/* ============================================================
-   CHAT
-   ============================================================ */
-
 const showChat = (): void => {
   const user = appState.getAuthenticatedUser();
 
@@ -66,32 +59,20 @@ const showChat = (): void => {
 
   chatPage.render(
     app,
-
     user,
-
     appState.getUsers(),
-
     appState.getSelectedUser(),
-
     appState.getMessages(),
 
-    // Usuário online
     (userId) => appState.isUserOnline(userId),
 
-    // Mensagens não lidas
     (userId) => appState.getUnreadMessages(userId),
 
-    // Status da chamada
     appState.getCallStatus(),
 
-    // Usuário da chamada
     appState.getCallUser(),
 
     appState.getCallStartedAt(),
-
-    /* ========================================================
-       SELECIONAR USUÁRIO
-       ======================================================== */
 
     (selectedUser) => {
       appState.setSelectedUser(selectedUser);
@@ -100,10 +81,6 @@ const showChat = (): void => {
 
       showChat();
     },
-
-    /* ========================================================
-       ENVIAR MENSAGEM
-       ======================================================== */
 
     async (receiverId, content) => {
       await window.api.socket.sendMessage(receiverId, content);
@@ -117,16 +94,17 @@ const showChat = (): void => {
       showChat();
     },
 
-    /* ========================================================
-       INICIAR CHAMADA
-       ======================================================== */
-
     async (selectedUser) => {
+      if (appState.getCallStatus() !== "idle") {
+        return;
+      }
+
       appState.setCallStatus("calling");
 
       appState.setCallUser(selectedUser);
 
       try {
+        // Primeiro avisa o outro usuário que existe uma chamada
         await window.api.socket.callRequest(selectedUser.id);
 
         console.log("[Renderer] Ligando para:", selectedUser.name);
@@ -135,36 +113,50 @@ const showChat = (): void => {
       } catch (error) {
         console.error("[Renderer] Erro ao iniciar chamada:", error);
 
+        webRTCService.stop();
+
         appState.clearCall();
 
         showChat();
       }
     },
 
-    /* ========================================================
-       CANCELAR CHAMADA
-       ======================================================== */
-
     async () => {
-      console.log("[Renderer] Cancelando chamada.");
+      const callUser = appState.getCallUser();
 
-      appState.clearCall();
+      if (!callUser) {
+        appState.clearCall();
 
-      showChat();
+        showChat();
+
+        return;
+      }
+
+      try {
+        console.log("[Renderer] Cancelando chamada com:", callUser.name);
+
+        await window.api.socket.callEnded(callUser.id);
+      } catch (error) {
+        console.error("[Renderer] Erro ao cancelar chamada:", error);
+      } finally {
+        appState.clearCall();
+
+        showChat();
+      }
     },
-
-    /* ========================================================
-       ACEITAR CHAMADA
-       ======================================================== */
 
     async () => {
       const callUser = appState.getCallUser();
 
       if (!callUser) {
+        console.error("[Renderer] Usuário da chamada não encontrado.");
+
         return;
       }
 
       try {
+        console.log("[Renderer] Aceitando chamada de:", callUser.name);
+
         await window.api.socket.callAccepted(callUser.id);
 
         appState.setCallStatus("connected");
@@ -181,10 +173,6 @@ const showChat = (): void => {
       }
     },
 
-    /* ========================================================
-       RECUSAR CHAMADA
-       ======================================================== */
-
     async () => {
       const callUser = appState.getCallUser();
 
@@ -195,37 +183,43 @@ const showChat = (): void => {
       }
 
       try {
+        console.log("[Renderer] Recusando chamada de:", callUser.name);
+
         await window.api.socket.callRejected(callUser.id);
-
-        appState.clearCall();
-
-        console.log("[Renderer] Chamada recusada:", callUser.name);
-
-        showChat();
       } catch (error) {
         console.error("[Renderer] Erro ao recusar chamada:", error);
-
+      } finally {
         appState.clearCall();
 
         showChat();
       }
     },
 
-    /* ========================================================
-       DESLIGAR CHAMADA
-       ======================================================== */
-
     async () => {
-      console.log("[Renderer] Desligando chamada.");
+      const callUser = appState.getCallUser();
+
+      if (!callUser) {
+        webRTCService.stop();
+
+        appState.clearCall();
+
+        showChat();
+
+        return;
+      }
+
+      try {
+        await window.api.socket.callEnded(callUser.id);
+      } catch (error) {
+        console.error("[Renderer] Erro ao encerrar chamada:", error);
+      }
+
+      webRTCService.stop();
 
       appState.clearCall();
 
       showChat();
     },
-
-    /* ========================================================
-       LOGOUT
-       ======================================================== */
 
     async () => {
       await window.api.auth.logout();
@@ -236,10 +230,6 @@ const showChat = (): void => {
     }
   );
 };
-
-/* ============================================================
-   PRESENCE
-   ============================================================ */
 
 window.api.socket.onOnlineUsers(({ userIds }) => {
   console.log("[Renderer] online_users recebido:", userIds);
@@ -277,10 +267,6 @@ window.api.socket.onUserOffline(({ userId }) => {
   showChat();
 });
 
-/* ============================================================
-   MESSAGES
-   ============================================================ */
-
 window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
   appState.addMessage({
     senderId,
@@ -303,12 +289,18 @@ window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
   showChat();
 });
 
-/* ============================================================
-   INCOMING CALL
-   ============================================================ */
-
 window.api.socket.onIncomingCall(({ callerId }) => {
   console.log("[Renderer] incoming_call:", callerId);
+
+  /*
+   * Se já estiver em uma chamada,
+   * ignora uma nova chamada.
+   */
+  if (appState.getCallStatus() !== "idle") {
+    console.log("[Renderer] Usuário já está em uma chamada.");
+
+    return;
+  }
 
   const caller = appState.getUsers().find((user) => user.id === callerId);
 
@@ -327,33 +319,48 @@ window.api.socket.onIncomingCall(({ callerId }) => {
   showChat();
 });
 
-/* ============================================================
-   CALL ACCEPTED
-   ============================================================ */
-
-window.api.socket.onCallAccepted(({ receiverId }) => {
+window.api.socket.onCallAccepted(async ({ receiverId }) => {
   console.log("[Renderer] call_accepted:", receiverId);
+
+  if (appState.getCallStatus() !== "calling") {
+    console.log(
+      "[Renderer] Ignorando call_accepted. Status atual:",
+      appState.getCallStatus()
+    );
+
+    return;
+  }
 
   const receiver = appState.getUsers().find((user) => user.id === receiverId);
 
   if (!receiver) {
+    console.error("[Renderer] Usuário da chamada não encontrado:", receiverId);
+
     return;
   }
 
   appState.setCallStatus("connected");
-
   appState.setCallUser(receiver);
-
   appState.setCallStartedAt();
 
   console.log("[Renderer] Chamada aceita por:", receiver.name);
 
   showChat();
-});
 
-/* ============================================================
-   CALL REJECTED
-   ============================================================ */
+  try {
+    await webRTCService.startCall(receiver);
+
+    console.log("[Renderer] WebRTC iniciado com:", receiver.name);
+  } catch (error) {
+    console.error("[Renderer] Erro ao iniciar WebRTC:", error);
+
+    webRTCService.stop();
+
+    appState.clearCall();
+
+    showChat();
+  }
+});
 
 window.api.socket.onCallRejected(({ receiverId }) => {
   console.log("[Renderer] call_rejected:", receiverId);
@@ -365,9 +372,15 @@ window.api.socket.onCallRejected(({ receiverId }) => {
   showChat();
 });
 
-/* ============================================================
-   REGISTER
-   ============================================================ */
+window.api.socket.onCallEnded(({ userId }) => {
+  console.log("[Renderer] call_ended recebido de:", userId);
+
+  webRTCService.stop();
+
+  appState.clearCall();
+
+  showChat();
+});
 
 const showRegister = (): void => {
   registerPage.render(app);
@@ -390,10 +403,6 @@ const showRegister = (): void => {
     }
   );
 };
-
-/* ============================================================
-   VERIFY EMAIL
-   ============================================================ */
 
 const showVerifyEmail = (email: string): void => {
   verifyEmailPage.render(app, email);
@@ -427,8 +436,54 @@ const showVerifyEmail = (email: string): void => {
   );
 };
 
-/* ============================================================
-   START APPLICATION
-   ============================================================ */
+window.api.socket.onWebRTCOffer(async ({ callerId, offer }) => {
+  console.log("[Renderer] WebRTC Offer recebida de:", callerId);
+
+  const caller = appState.getUsers().find((user) => user.id === callerId);
+
+  if (!caller) {
+    console.error("[Renderer] Usuário da offer não encontrado:", callerId);
+
+    return;
+  }
+
+  try {
+    await webRTCService.handleOffer(caller, offer);
+
+    console.log("[Renderer] WebRTC Offer processada.");
+  } catch (error) {
+    console.error("[Renderer] Erro ao processar WebRTC Offer:", error);
+
+    webRTCService.stop();
+  }
+});
+
+window.api.socket.onWebRTCAnswer(async ({ receiverId, answer }) => {
+  console.log("[Renderer] WebRTC Answer recebida de:", receiverId);
+
+  try {
+    await webRTCService.handleAnswer(answer);
+
+    console.log("[Renderer] WebRTC Answer processada.");
+  } catch (error) {
+    console.error("[Renderer] Erro ao processar WebRTC Answer:", error);
+
+    webRTCService.stop();
+
+    appState.clearCall();
+
+    showChat();
+  }
+});
+
+window.api.socket.onWebRTCIceCandidate(async ({ senderId, candidate }) => {
+  console.log("[Renderer] ICE Candidate recebida de:", senderId);
+
+  try {
+    await webRTCService.handleIceCandidate(candidate);
+  } catch (error) {
+    console.error("[Renderer] Erro ao processar ICE Candidate:", error);
+  }
+});
 
 showLogin();

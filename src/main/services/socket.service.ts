@@ -34,7 +34,25 @@ export class SocketService {
     this.registerConnectionEvents();
     this.registerPresenceEvents(this.socket);
     this.registerMessageEvents(this.socket);
-    this.registerCallEvents();
+    this.registerCallEvents(this.socket);
+    this.registerCallEvents(this.socket);
+    this.registerWebRTCEvents(this.socket);
+  }
+
+  disconnect(): void {
+    console.log("[SocketService] disconnect() chamado");
+
+    console.log(
+      "[SocketService] Socket antes:",
+      this.socket?.id,
+      this.socket?.connected
+    );
+
+    this.socket?.disconnect();
+
+    this.socket = null;
+
+    console.log("[SocketService] Socket depois:", this.socket);
   }
 
   private registerConnectionEvents(): void {
@@ -57,8 +75,6 @@ export class SocketService {
 
   private registerPresenceEvents(socket: Socket): void {
     console.log("[SocketService] registerPresenceEvents() chamado");
-
-    console.log("[SocketService] socket:", socket.id);
 
     socket.on("online_users", (data: { userIds: number[] }) => {
       console.log("[SocketService] online_users:", {
@@ -88,37 +104,10 @@ export class SocketService {
     });
   }
 
-  disconnect(): void {
-    console.log("[SocketService] disconnect() chamado");
-
-    console.log(
-      "[SocketService] Socket antes:",
-      this.socket?.id,
-      this.socket?.connected
-    );
-
-    this.socket?.disconnect();
-
-    this.socket = null;
-
-    console.log("[SocketService] Socket depois:", this.socket);
-  }
-
-  sendMessage(receiverId: number, content: string): void {
-    if (!this.socket?.connected) {
-      throw new Error("Socket.IO não está conectado.");
-    }
-
-    this.socket.emit("send_message", {
-      receiverId,
-      content,
-    });
-  }
+  // socket
 
   private registerMessageEvents(socket: Socket): void {
     console.log("[SocketService] registerMessageEvents() chamado");
-
-    console.log("[SocketService] socket:", socket.id);
 
     socket.on(
       "new_message",
@@ -130,63 +119,182 @@ export class SocketService {
     );
   }
 
+  // call
+
+  private registerCallEvents(socket: Socket): void {
+    console.log("[SocketService] registerCallEvents() chamado");
+    socket.on("incoming_call", (data: { callerId: number }) => {
+      console.log("[SocketService] incoming_call:", data);
+
+      this.emitToRenderer("socket:incoming-call", data);
+    });
+
+    socket.on("call_accepted", (data: { receiverId: number }) => {
+      console.log("[SocketService] call_accepted:", data);
+
+      this.emitToRenderer("socket:call-accepted", data);
+    });
+
+    socket.on("call_rejected", (data: { receiverId: number }) => {
+      console.log("[SocketService] call_rejected:", data);
+
+      this.emitToRenderer("socket:call-rejected", data);
+    });
+
+    socket.on("call_ended", (data: { userId: number }) => {
+      console.log("[SocketService] call_ended:", data);
+
+      this.emitToRenderer("socket:call-ended", data);
+    });
+  }
+
+  requestCall(receiverId: number): void {
+    this.validateSocket();
+
+    console.log("[SocketService] Enviando call_request:", {
+      receiverId,
+    });
+
+    this.socket!.emit("call_request", {
+      receiverId,
+    });
+  }
+
+  acceptCall(receiverId: number): void {
+    this.validateSocket();
+
+    console.log("[SocketService] Enviando call_accepted:", {
+      receiverId,
+    });
+
+    this.socket!.emit("call_accepted", {
+      receiverId,
+    });
+  }
+
+  rejectCall(receiverId: number): void {
+    this.validateSocket();
+
+    console.log("[SocketService] Enviando call_rejected:", {
+      receiverId,
+    });
+
+    this.socket!.emit("call_rejected", {
+      receiverId,
+    });
+  }
+
+  endCall(receiverId: number): void {
+    this.validateSocket();
+
+    console.log("[SocketService] Enviando call_ended:", {
+      receiverId,
+    });
+
+    this.socket!.emit("call_ended", {
+      receiverId,
+    });
+  }
+
+  sendMessage(receiverId: number, content: string): void {
+    this.validateSocket();
+
+    this.socket!.emit("send_message", {
+      receiverId,
+      content,
+    });
+  }
+
+  private validateSocket(): void {
+    if (!this.socket?.connected) {
+      throw new Error("Socket.IO não está conectado.");
+    }
+  }
+
   private emitToRenderer(channel: string, payload: unknown): void {
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(channel, payload);
     }
   }
 
-  private registerCallEvents(): void {
-    if (!this.socket) {
-      return;
-    }
+  // web rtc
 
-    this.socket.on("incoming_call", (data: { callerId: number }) => {
-      console.log("[SocketService] incoming_call:", data);
+  private registerWebRTCEvents(socket: Socket): void {
+    console.log("[SocketService] registerWebRTCEvents() chamado");
 
-      this.emitToRenderer("socket:incoming-call", data);
+    socket.on(
+      "webrtc_offer",
+      (data: { callerId: number; offer: RTCSessionDescriptionInit }) => {
+        console.log("[SocketService] webrtc_offer:", data);
+
+        this.emitToRenderer("socket:webrtc-offer", data);
+      }
+    );
+
+    socket.on(
+      "webrtc_answer",
+      (data: { receiverId: number; answer: RTCSessionDescriptionInit }) => {
+        console.log("[SocketService] webrtc_answer:", data);
+
+        this.emitToRenderer("socket:webrtc-answer", data);
+      }
+    );
+
+    socket.on(
+      "webrtc_ice_candidate",
+      (data: { senderId: number; candidate: RTCIceCandidateInit }) => {
+        console.log("[SocketService] webrtc_ice_candidate:", data);
+
+        this.emitToRenderer("socket:webrtc-ice-candidate", data);
+      }
+    );
+  }
+
+  sendWebRTCOffer(receiverId: number, offer: RTCSessionDescriptionInit): void {
+    this.validateSocket();
+
+    console.log("[SocketService] Enviando webrtc_offer:", {
+      receiverId,
+      offer,
     });
 
-    this.socket.on("call_accepted", (data: { receiverId: number }) => {
-      console.log("[SocketService] call_accepted:", data);
-
-      this.emitToRenderer("socket:call-accepted", data);
-    });
-
-    this.socket.on("call_rejected", (data: { receiverId: number }) => {
-      console.log("[SocketService] call_rejected:", data);
-
-      this.emitToRenderer("socket:call-rejected", data);
+    this.socket!.emit("webrtc_offer", {
+      receiverId,
+      offer,
     });
   }
 
-  requestCall(receiverId: number): void {
-    if (!this.socket?.connected) {
-      throw new Error("Socket.IO não está conectado.");
-    }
+  sendWebRTCAnswer(
+    receiverId: number,
+    answer: RTCSessionDescriptionInit
+  ): void {
+    this.validateSocket();
 
-    this.socket.emit("call_request", {
+    console.log("[SocketService] Enviando webrtc_answer:", {
       receiverId,
+      answer,
+    });
+
+    this.socket!.emit("webrtc_answer", {
+      receiverId,
+      answer,
     });
   }
 
-  acceptCall(receiverId: number): void {
-    if (!this.socket?.connected) {
-      throw new Error("Socket.IO não está conectado.");
-    }
+  sendWebRTCIceCandidate(
+    receiverId: number,
+    candidate: RTCIceCandidateInit
+  ): void {
+    this.validateSocket();
 
-    this.socket.emit("call_accepted", {
+    console.log("[SocketService] Enviando webrtc_ice_candidate:", {
       receiverId,
+      candidate,
     });
-  }
 
-  rejectCall(receiverId: number): void {
-    if (!this.socket?.connected) {
-      throw new Error("Socket.IO não está conectado.");
-    }
-
-    this.socket.emit("call_rejected", {
+    this.socket!.emit("webrtc_ice_candidate", {
       receiverId,
+      candidate,
     });
   }
 }
