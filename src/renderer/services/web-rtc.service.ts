@@ -315,6 +315,40 @@ export class WebRTCService {
     });
   }
 
+  mute(): void {
+    if (!this.localStream) {
+      return;
+    }
+
+    for (const track of this.localStream.getAudioTracks()) {
+      track.enabled = false;
+    }
+
+    console.log("[WebRTC] Microfone mutado.");
+  }
+
+  unmute(): void {
+    if (!this.localStream) {
+      return;
+    }
+
+    for (const track of this.localStream.getAudioTracks()) {
+      track.enabled = true;
+    }
+
+    console.log("[WebRTC] Microfone ativado.");
+  }
+
+  isMuted(): boolean {
+    if (!this.localStream) {
+      return false;
+    }
+
+    const audioTrack = this.localStream.getAudioTracks()[0];
+
+    return audioTrack ? !audioTrack.enabled : false;
+  }
+
   stop(): void {
     console.log("[WebRTC] Encerrando conexão...");
 

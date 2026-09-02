@@ -17,6 +17,7 @@ export class ChatPage {
     callStatus: CallStatus,
     callUser: User | null,
     callStartedAt: number | null,
+    getIsMuted: () => boolean,
     onSelectUser: (user: User) => void,
     onSendMessage: (receiverId: number, content: string) => Promise<void>,
     onCall: (user: User) => Promise<void>,
@@ -24,6 +25,7 @@ export class ChatPage {
     onAcceptCall: () => Promise<void>,
     onRejectCall: () => Promise<void>,
     onEndCall: () => Promise<void>,
+    onToggleMute: () => void,
     onLogout: () => Promise<void>
   ): void {
     const availableUsers = users.filter((item) => item.id !== user.id);
@@ -150,7 +152,7 @@ export class ChatPage {
           </div>
         `;
 
-    const callModal = this.renderCallModal(callStatus, callUser);
+    const callModal = this.renderCallModal(callStatus, callUser, getIsMuted);
 
     container.innerHTML = `
       <main class="chat">
@@ -259,7 +261,8 @@ export class ChatPage {
       onCancelCall,
       onAcceptCall,
       onRejectCall,
-      onEndCall
+      onEndCall,
+      onToggleMute
     );
 
     if (callStatus === "connected" && callStartedAt !== null) {
@@ -367,7 +370,8 @@ export class ChatPage {
 
   private renderCallModal(
     callStatus: CallStatus,
-    callUser: User | null
+    callUser: User | null,
+    getIsMuted: () => boolean
   ): string {
     if (callStatus === "idle" || !callUser) {
       return "";
@@ -450,42 +454,56 @@ export class ChatPage {
     }
 
     if (callStatus === "connected") {
+      const isMuted = getIsMuted();
+
       return `
-      <div class="call-overlay">
+    <div class="call-overlay">
 
-        <div class="call-modal">
+      <div class="call-modal">
 
-          <div class="call-modal__icon">
-            📞
-          </div>
+        <div class="call-modal__icon">
+          📞
+        </div>
 
-          <h2>
-            Em chamada
-          </h2>
+        <h2>
+          Em chamada
+        </h2>
 
-          <p>
-            ${callUser.name}
-          </p>
+        <p>
+          ${callUser.name}
+        </p>
 
-          <span
-            id="call-timer"
-            class="call-modal__timer"
+        <span
+          id="call-timer"
+          class="call-modal__timer"
+        >
+          00:00
+        </span>
+
+        <div class="call-modal__actions">
+
+          <button
+            id="mute-call-button"
+            class="call-modal__button"
+            type="button"
           >
-            00:00
-          </span>
+            ${isMuted ? "🔇 Desmutar" : "🎤 Mutar"}
+          </button>
 
           <button
             id="end-call-button"
             class="call-modal__button call-modal__button--danger"
             type="button"
           >
-            Desligar
+            📞 Desligar
           </button>
 
         </div>
 
       </div>
-    `;
+
+    </div>
+  `;
     }
 
     return "";
@@ -496,7 +514,8 @@ export class ChatPage {
     onCancelCall: () => Promise<void>,
     onAcceptCall: () => Promise<void>,
     onRejectCall: () => Promise<void>,
-    onEndCall: () => Promise<void>
+    onEndCall: () => Promise<void>,
+    onToggleMute: () => void
   ): void {
     if (callStatus === "calling") {
       const button = document.querySelector<HTMLButtonElement>(
@@ -543,10 +562,39 @@ export class ChatPage {
     }
 
     if (callStatus === "connected") {
-      const button =
+      const muteButton =
+        document.querySelector<HTMLButtonElement>("#mute-call-button");
+
+      const endButton =
         document.querySelector<HTMLButtonElement>("#end-call-button");
 
-      button?.addEventListener("click", async () => {
+      muteButton?.addEventListener("click", () => {
+        try {
+          onToggleMute();
+
+          const isMuted = muteButton.dataset.muted === "true";
+
+          muteButton.dataset.muted = String(!isMuted);
+
+          const icon =
+            muteButton.querySelector<HTMLSpanElement>("#mute-call-icon");
+
+          const text =
+            muteButton.querySelector<HTMLSpanElement>("#mute-call-text");
+
+          if (!isMuted) {
+            icon!.textContent = "🔇";
+            text!.textContent = "Desmutar";
+          } else {
+            icon!.textContent = "🎤";
+            text!.textContent = "Mutar";
+          }
+        } catch (error) {
+          console.error("[ChatPage] Erro ao alterar mute:", error);
+        }
+      });
+
+      endButton?.addEventListener("click", async () => {
         try {
           await onEndCall();
         } catch (error) {

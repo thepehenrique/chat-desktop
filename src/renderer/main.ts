@@ -74,6 +74,8 @@ const showChat = (): void => {
 
     appState.getCallStartedAt(),
 
+    () => webRTCService.isMuted(),
+
     (selectedUser) => {
       appState.setSelectedUser(selectedUser);
 
@@ -217,6 +219,16 @@ const showChat = (): void => {
       webRTCService.stop();
 
       appState.clearCall();
+
+      showChat();
+    },
+
+    () => {
+      if (webRTCService.isMuted()) {
+        webRTCService.unmute();
+      } else {
+        webRTCService.mute();
+      }
 
       showChat();
     },
