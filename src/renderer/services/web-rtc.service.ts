@@ -409,4 +409,24 @@ export class WebRTCService {
   isConnected(): boolean {
     return this.peerConnection?.connectionState === "connected";
   }
+
+  setVolume(volume: number): void {
+    if (!this.remoteAudio) {
+      return;
+    }
+
+    const normalizedVolume = Math.max(0, Math.min(1, volume));
+
+    this.remoteAudio.volume = normalizedVolume;
+
+    console.log("[WebRTC] Volume ajustado para:", normalizedVolume);
+  }
+
+  getVolume(): number {
+    if (!this.remoteAudio) {
+      return 1;
+    }
+
+    return this.remoteAudio.volume;
+  }
 }

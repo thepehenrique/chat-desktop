@@ -482,6 +482,15 @@ export class ChatPage {
 
         <div class="call-modal__actions">
 
+        🔊
+          <input
+            id="call-volume"
+            type="range"
+            min="0"
+            max="100"
+            value="100"
+          />
+
           <button
             id="mute-call-button"
             class="call-modal__button"
