@@ -4,10 +4,10 @@ export class LoginPage {
       <main class="app">
         <section class="login">
 
-          <h1>Chat Desktop</h1>
+          <h1>DeskChat</h1>
 
           <p>
-            Entre para continuar
+            Privacidade e Segurança
           </p>
 
           <form id="login-form">
@@ -49,6 +49,13 @@ export class LoginPage {
 
           </form>
 
+         <label
+          id="forgot-password-button"
+          class="login__forgot-password-button"
+        >
+          Esqueci minha senha
+        </label>
+
           <button
             id="register-button"
             class="login__register-button"
@@ -64,7 +71,8 @@ export class LoginPage {
 
   bindEvents(
     onSubmit: (email: string, password: string) => Promise<void>,
-    onRegister: () => void
+    onRegister: () => void,
+    onForgotPassword: () => void
   ): void {
     const form = document.querySelector<HTMLFormElement>("#login-form");
 
@@ -77,6 +85,10 @@ export class LoginPage {
 
     const registerButton =
       document.querySelector<HTMLButtonElement>("#register-button");
+
+    const forgotPasswordButton = document.querySelector<HTMLElement>(
+      "#forgot-password-button"
+    );
 
     if (!form) {
       throw new Error("Formulário de login não encontrado.");
@@ -92,6 +104,10 @@ export class LoginPage {
 
     if (!registerButton) {
       throw new Error("Botão de cadastro não encontrado.");
+    }
+
+    if (!forgotPasswordButton) {
+      throw new Error("Botão de recuperação de senha não encontrado.");
     }
 
     form.addEventListener("submit", async (event) => {
@@ -124,6 +140,10 @@ export class LoginPage {
 
     registerButton.addEventListener("click", () => {
       onRegister();
+    });
+
+    forgotPasswordButton.addEventListener("click", () => {
+      onForgotPassword();
     });
   }
 

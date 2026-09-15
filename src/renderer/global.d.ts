@@ -31,6 +31,14 @@ declare global {
 
         resendVerification: (email: string) => Promise<void>;
 
+        forgotPassword: (email: string) => Promise<void>;
+
+        resetPassword: (
+          email: string,
+          code: string,
+          password: string
+        ) => Promise<void>;
+
         refresh: () => Promise<boolean>;
 
         logout: () => Promise<boolean>;

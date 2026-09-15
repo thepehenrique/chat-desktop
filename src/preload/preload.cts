@@ -39,6 +39,18 @@ contextBridge.exposeInMainWorld("api", {
       return ipcRenderer.invoke("auth:resend-verification", email);
     },
 
+    forgotPassword: (email: string): Promise<void> => {
+      return ipcRenderer.invoke("auth:forgot-password", email);
+    },
+
+    resetPassword: (
+      email: string,
+      code: string,
+      password: string
+    ): Promise<void> => {
+      return ipcRenderer.invoke("auth:reset-password", email, code, password);
+    },
+
     refresh: (): Promise<boolean> => {
       return ipcRenderer.invoke("auth:refresh");
     },

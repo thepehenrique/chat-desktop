@@ -101,6 +101,23 @@ ipcMain.handle(
   }
 );
 
+ipcMain.handle("auth:forgot-password", async (_event, email: string) => {
+  await authService.forgotPassword({
+    email,
+  });
+});
+
+ipcMain.handle(
+  "auth:reset-password",
+  async (_event, email: string, code: string, password: string) => {
+    await authService.resetPassword({
+      email,
+      code,
+      password,
+    });
+  }
+);
+
 ipcMain.handle("auth:refresh", async () => {
   return authService.refresh();
 });

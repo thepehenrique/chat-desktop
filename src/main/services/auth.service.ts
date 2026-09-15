@@ -121,4 +121,40 @@ export class AuthService {
       throw new Error("Não foi possível reenviar o código de verificação.");
     }
   }
+
+  async forgotPassword(data: { email: string }): Promise<void> {
+    const response = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Não foi possível solicitar a recuperação da senha.");
+    }
+  }
+
+  async resetPassword(data: {
+    email: string;
+    code: string;
+    password: string;
+  }): Promise<void> {
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Não foi possível alterar a senha.");
+    }
+  }
 }

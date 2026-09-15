@@ -4,6 +4,8 @@ import { AppState } from "./state/app.state.js";
 import { RegisterPage } from "./pages/register/register.page.js";
 import { VerifyEmailPage } from "./pages/verify-email/verify-email.page.js";
 import { WebRTCService } from "./services/web-rtc.service.js";
+import { ForgotPasswordPage } from "./pages/password/forgot-password.page.js";
+import { ResetPasswordPage } from "./pages/password/reset-password.page.js";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -17,10 +19,63 @@ const loginPage = new LoginPage();
 const chatPage = new ChatPage();
 const registerPage = new RegisterPage();
 const verifyEmailPage = new VerifyEmailPage();
+const forgotPasswordPage = new ForgotPasswordPage();
+const resetPasswordPage = new ResetPasswordPage();
 
 const notificationSound = new Audio("./assets/popup.mp3");
 
-notificationSound.volume = 0.25;
+const callSound = new Audio("./assets/call.mp3");
+callSound.volume = 0.5;
+callSound.loop = true;
+
+let callTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const startCallSound = (): void => {
+  callSound.currentTime = 0;
+
+  callSound.play().catch((error) => {
+    console.error("[Renderer] Erro ao reproduzir toque da chamada:", error);
+  });
+};
+
+const stopCallSound = (): void => {
+  callSound.pause();
+  callSound.currentTime = 0;
+
+  if (callTimeout) {
+    clearTimeout(callTimeout);
+    callTimeout = null;
+  }
+};
+
+const startCallTimeout = (): void => {
+  if (callTimeout) {
+    clearTimeout(callTimeout);
+  }
+
+  callTimeout = setTimeout(async () => {
+    console.log("[Renderer] Tempo máximo da chamada atingido.");
+
+    stopCallSound();
+
+    const callUser = appState.getCallUser();
+
+    if (callUser) {
+      try {
+        await window.api.socket.callEnded(callUser.id);
+      } catch (error) {
+        console.error(
+          "[Renderer] Erro ao encerrar chamada por timeout:",
+          error
+        );
+      }
+    }
+
+    webRTCService.stop();
+    appState.clearCall();
+    showChat();
+  }, 60_000);
+};
 
 const showLogin = (): void => {
   loginPage.render(app);
@@ -44,6 +99,10 @@ const showLogin = (): void => {
 
     () => {
       showRegister();
+    },
+
+    () => {
+      showForgotPassword();
     }
   );
 };
@@ -106,8 +165,10 @@ const showChat = (): void => {
       appState.setCallUser(selectedUser);
 
       try {
-        // Primeiro avisa o outro usuário que existe uma chamada
         await window.api.socket.callRequest(selectedUser.id);
+
+        startCallSound();
+        startCallTimeout();
 
         console.log("[Renderer] Ligando para:", selectedUser.name);
 
@@ -161,6 +222,8 @@ const showChat = (): void => {
 
         await window.api.socket.callAccepted(callUser.id);
 
+        stopCallSound();
+
         appState.setCallStatus("connected");
 
         appState.setCallStartedAt();
@@ -168,6 +231,8 @@ const showChat = (): void => {
         showChat();
       } catch (error) {
         console.error("[Renderer] Erro ao aceitar chamada:", error);
+
+        stopCallSound();
 
         appState.clearCall();
 
@@ -187,6 +252,7 @@ const showChat = (): void => {
       try {
         console.log("[Renderer] Recusando chamada de:", callUser.name);
 
+        stopCallSound();
         await window.api.socket.callRejected(callUser.id);
       } catch (error) {
         console.error("[Renderer] Erro ao recusar chamada:", error);
@@ -211,6 +277,7 @@ const showChat = (): void => {
       }
 
       try {
+        stopCallSound();
         await window.api.socket.callEnded(callUser.id);
       } catch (error) {
         console.error("[Renderer] Erro ao encerrar chamada:", error);
@@ -238,6 +305,8 @@ const showChat = (): void => {
     },
 
     async () => {
+      stopCallSound();
+
       await window.api.auth.logout();
 
       appState.clear();
@@ -308,10 +377,6 @@ window.api.socket.onNewMessage(({ senderId, receiverId, content }) => {
 window.api.socket.onIncomingCall(({ callerId }) => {
   console.log("[Renderer] incoming_call:", callerId);
 
-  /*
-   * Se já estiver em uma chamada,
-   * ignora uma nova chamada.
-   */
   if (appState.getCallStatus() !== "idle") {
     console.log("[Renderer] Usuário já está em uma chamada.");
 
@@ -327,10 +392,12 @@ window.api.socket.onIncomingCall(({ callerId }) => {
   }
 
   appState.setCallStatus("incoming");
-
   appState.setCallUser(caller);
 
   console.log("[Renderer] Chamada recebida de:", caller.name);
+
+  startCallSound();
+  startCallTimeout();
 
   showChat();
 });
@@ -354,6 +421,8 @@ window.api.socket.onCallAccepted(async ({ receiverId }) => {
 
     return;
   }
+
+  stopCallSound();
 
   appState.setCallStatus("connected");
   appState.setCallUser(receiver);
@@ -381,6 +450,8 @@ window.api.socket.onCallAccepted(async ({ receiverId }) => {
 window.api.socket.onCallRejected(({ receiverId }) => {
   console.log("[Renderer] call_rejected:", receiverId);
 
+  stopCallSound();
+
   appState.clearCall();
 
   console.log("[Renderer] Chamada recusada por:", receiverId);
@@ -390,6 +461,8 @@ window.api.socket.onCallRejected(({ receiverId }) => {
 
 window.api.socket.onCallEnded(({ userId }) => {
   console.log("[Renderer] call_ended recebido de:", userId);
+
+  stopCallSound();
 
   webRTCService.stop();
 
@@ -501,5 +574,45 @@ window.api.socket.onWebRTCIceCandidate(async ({ senderId, candidate }) => {
     console.error("[Renderer] Erro ao processar ICE Candidate:", error);
   }
 });
+
+const showForgotPassword = (): void => {
+  forgotPasswordPage.render(app);
+
+  forgotPasswordPage.bindEvents(
+    async (email) => {
+      await window.api.auth.forgotPassword(email);
+
+      showResetPassword(email);
+    },
+
+    () => {
+      showLogin();
+    }
+  );
+};
+
+const showResetPassword = (email: string): void => {
+  resetPasswordPage.render(app, email);
+
+  resetPasswordPage.bindEvents(
+    async (code, password) => {
+      await window.api.auth.resetPassword(email, code, password);
+
+      resetPasswordPage.showSuccess();
+    },
+
+    () => {
+      showLogin();
+    }
+  );
+
+  window.addEventListener(
+    "reset-password-success-login",
+    () => {
+      showLogin();
+    },
+    { once: true }
+  );
+};
 
 showLogin();
