@@ -26,6 +26,7 @@ export class ChatPage {
     onRejectCall: () => Promise<void>,
     onEndCall: () => Promise<void>,
     onToggleMute: () => void,
+    onVolumeChange: (volume: number) => void,
     onLogout: () => Promise<void>
   ): void {
     const availableUsers = users.filter((item) => item.id !== user.id);
@@ -262,7 +263,8 @@ export class ChatPage {
       onAcceptCall,
       onRejectCall,
       onEndCall,
-      onToggleMute
+      onToggleMute,
+      onVolumeChange
     );
 
     if (callStatus === "connected" && callStartedAt !== null) {
@@ -480,9 +482,9 @@ export class ChatPage {
           00:00
         </span>
 
-        <div class="call-modal__actions">
+        <div class="call-modal__volume">
+          <span>🔊</span>
 
-        🔊
           <input
             id="call-volume"
             type="range"
@@ -490,6 +492,9 @@ export class ChatPage {
             max="100"
             value="100"
           />
+        </div>
+
+        <div class="call-modal__actions">
 
           <button
             id="mute-call-button"
@@ -524,7 +529,8 @@ export class ChatPage {
     onAcceptCall: () => Promise<void>,
     onRejectCall: () => Promise<void>,
     onEndCall: () => Promise<void>,
-    onToggleMute: () => void
+    onToggleMute: () => void,
+    onVolumeChange: (volume: number) => void
   ): void {
     if (callStatus === "calling") {
       const button = document.querySelector<HTMLButtonElement>(
@@ -576,6 +582,15 @@ export class ChatPage {
 
       const endButton =
         document.querySelector<HTMLButtonElement>("#end-call-button");
+
+      const volumeControl =
+        document.querySelector<HTMLInputElement>("#call-volume");
+
+      volumeControl?.addEventListener("input", () => {
+        const volume = Number(volumeControl.value);
+
+        onVolumeChange(volume);
+      });
 
       muteButton?.addEventListener("click", () => {
         try {

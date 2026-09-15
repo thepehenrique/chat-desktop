@@ -233,6 +233,10 @@ const showChat = (): void => {
       showChat();
     },
 
+    (volume) => {
+      webRTCService.setVolume(volume);
+    },
+
     async () => {
       await window.api.auth.logout();
 

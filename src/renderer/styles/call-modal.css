@@ -1,215 +1,159 @@
-/* 
-
-#call-modal {
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 9999;
-}
-
-.call-modal__overlay {
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(0, 0, 0, 0.55);
-}
-
-.call-modal__content {
-  width: 360px;
-
-  padding: 32px;
-
-  text-align: center;
-
-  background: #171a21;
-
-  border: 1px solid #252a34;
-
-  border-radius: 16px;
-
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-.call-modal__icon {
-  font-size: 42px;
-
-  margin-bottom: 16px;
-}
-
-.call-modal__content h2 {
-  margin: 0;
-
-  color: #f1f3f5;
-
-  font-size: 22px;
-}
-
-.call-modal__content p {
-  margin: 10px 0 24px;
-
-  color: #8f96a3;
-
-  font-size: 14px;
-}
-
-.call-modal__actions {
-  display: flex;
-
-  gap: 12px;
-}
-
-.call-modal__actions button {
-  flex: 1;
-
-  height: 44px;
-
-  border: none;
-
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  font-weight: 600;
-}
-
-#call-reject-button {
-  background: #2a303b;
-
-  color: #f1f3f5;
-}
-
-#call-accept-button {
-  background: #6c7cff;
-
-  color: #ffffff;
-} */
-
+/*CALL MODAL*/
 .call-overlay {
   position: fixed;
-
   inset: 0;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  background: rgba(0, 0, 0, 0.55);
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.65);
 
   z-index: 1000;
+
+  box-sizing: border-box;
 }
 
 .call-modal {
-  width: 360px;
+  width: min(420px, 100%);
+  max-width: 100%;
 
-  padding: 32px;
+  padding: 28px;
 
-  text-align: center;
+  box-sizing: border-box;
 
   background: #171a21;
 
   border: 1px solid #252a34;
+  border-radius: 14px;
 
-  border-radius: 16px;
+  text-align: center;
 
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 .call-modal__icon {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 64px;
-
-  height: 64px;
-
-  margin: 0 auto 20px;
-
-  border-radius: 50%;
-
-  background: #252a34;
-
-  font-size: 28px;
+  font-size: 36px;
+  margin-bottom: 12px;
 }
 
 .call-modal h2 {
-  margin: 0;
-
-  color: #f1f3f5;
+  margin: 0 0 8px;
 
   font-size: 20px;
+  color: #f1f3f5;
 }
 
 .call-modal p {
-  margin: 8px 0 24px;
+  margin: 0 0 18px;
 
   color: #8f96a3;
-
   font-size: 14px;
-}
 
-.call-modal__actions {
-  display: flex;
-
-  gap: 12px;
-}
-
-.call-modal__button {
-  flex: 1;
-
-  height: 44px;
-
-  border: none;
-
-  border-radius: 8px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    opacity 0.2s ease,
-    transform 0.1s ease;
-}
-
-.call-modal__button:hover {
-  opacity: 0.9;
-}
-
-.call-modal__button:active {
-  transform: scale(0.98);
-}
-
-.call-modal__button--danger {
-  background: #dc3545;
-
-  color: #fff;
-}
-
-.call-modal__button--success {
-  background: #22c55e;
-
-  color: #fff;
+  overflow-wrap: anywhere;
 }
 
 .call-modal__timer {
   display: block;
 
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
-  color: #8f96a3;
+  color: #f1f3f5;
 
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 600;
 }
+
+/* CALL ACTIONS*/
+.call-modal__actions {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+}
+
+.call-modal__actions .call-modal__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.call-modal__button {
+  min-width: 110px;
+  max-width: 100%;
+
+  height: 40px;
+
+  padding: 0 14px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #2a303b;
+  color: #f1f3f5;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
+}
+
+.call-modal__button:hover {
+  background: #39414f;
+}
+
+.call-modal__button:active {
+  transform: scale(0.97);
+}
+
+.call-modal__button--danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.call-modal__button--danger:hover {
+  background: #b91c1c;
+}
+
+.call-modal__button--success {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.call-modal__button--success:hover {
+  background: #15803d;
+}
+
+/*VOLUME*/
+.call-modal__volume {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 20px;
+}
+
+.call-modal__volume > span {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+#call-volume {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+
+  accent-color: #6c7cff;
+}
+

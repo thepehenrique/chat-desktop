@@ -65,6 +65,8 @@ declare global {
 
         callRejected: (receiverId: number) => Promise<void>;
 
+        callEnded: (receiverId: number) => Promise<void>;
+
         onIncomingCall: (
           callback: (data: { callerId: number }) => void
         ) => () => void;
@@ -75,6 +77,48 @@ declare global {
 
         onCallRejected: (
           callback: (data: { receiverId: number }) => void
+        ) => () => void;
+
+        onCallEnded: (
+          callback: (data: { userId: number }) => void
+        ) => () => void;
+
+        // WebRTC
+
+        sendWebRTCOffer: (
+          receiverId: number,
+          offer: RTCSessionDescriptionInit
+        ) => Promise<void>;
+
+        onWebRTCOffer: (
+          callback: (data: {
+            callerId: number;
+            offer: RTCSessionDescriptionInit;
+          }) => void
+        ) => () => void;
+
+        sendWebRTCAnswer: (
+          receiverId: number,
+          answer: RTCSessionDescriptionInit
+        ) => Promise<void>;
+
+        onWebRTCAnswer: (
+          callback: (data: {
+            receiverId: number;
+            answer: RTCSessionDescriptionInit;
+          }) => void
+        ) => () => void;
+
+        sendWebRTCIceCandidate: (
+          receiverId: number,
+          candidate: RTCIceCandidateInit
+        ) => Promise<void>;
+
+        onWebRTCIceCandidate: (
+          callback: (data: {
+            senderId: number;
+            candidate: RTCIceCandidateInit;
+          }) => void
         ) => () => void;
       };
 

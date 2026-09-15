@@ -1,7 +1,4 @@
-/* ==============================
-   CHAT
-   ============================== */
-
+/*CHAT*/
 .chat {
   width: 100%;
   height: 100vh;
@@ -11,10 +8,7 @@
   background: #0f1115;
 }
 
-/* ==============================
-   SIDEBAR
-   ============================== */
-
+/* SIDEBAR*/
 .chat__sidebar {
   width: 280px;
 
@@ -48,10 +42,7 @@
   flex-direction: column;
 }
 
-/* ==============================
-   USERS
-   ============================== */
-
+/*USERS*/
 .chat__user {
   position: relative;
 
@@ -94,10 +85,7 @@
   text-overflow: ellipsis;
 }
 
-/* ==============================
-   ONLINE STATUS
-   ============================== */
-
+/*ONLINE STATUS*/
 .chat__status {
   width: 9px;
   height: 9px;
@@ -113,10 +101,7 @@
   background: #4ade80;
 }
 
-/* ==============================
-   UNREAD MESSAGES
-   ============================== */
-
+/*UNREAD MESSAGES*/
 .chat__user-notification {
   min-width: 20px;
   height: 20px;
@@ -138,10 +123,7 @@
   line-height: 1;
 }
 
-/* ==============================
-   CONTENT
-   ============================== */
-
+/*CONTENT*/
 .chat__content {
   flex: 1;
 
@@ -149,10 +131,7 @@
   flex-direction: column;
 }
 
-/* ==============================
-   HEADER
-   ============================== */
-
+/*HEADER*/
 .chat__header {
   height: 64px;
 
@@ -171,18 +150,14 @@
   font-size: 16px;
 }
 
-/* ==============================
-   LOGOUT
-   ============================== */
-
+/*LOGOUT*/
 .chat__actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Botão de ligação */
-
+/*Botão de ligação*/
 .chat__call,
 .chat__logout {
   display: inline-flex;
@@ -217,8 +192,7 @@
   transform: scale(0.96);
 }
 
-/* Logout */
-
+/*Logout*/
 .chat__logout {
   background: #dc2626;
   color: #ffffff;
@@ -232,18 +206,14 @@
   transform: scale(0.96);
 }
 
-/* Ícones */
-
+/*Ícones*/
 .chat__call span,
 .chat__logout span {
   font-size: 14px;
   line-height: 1;
 }
 
-/* ==============================
-   CONVERSATION
-   ============================== */
-
+/*CONVERSATION*/
 .chat__conversation {
   flex: 1;
 
@@ -263,10 +233,7 @@
   color: #626a78;
 }
 
-/* ==============================
-   MESSAGES
-   ============================== */
-
+/*MESSAGES*/
 .chat__messages {
   flex: 1;
 
@@ -336,10 +303,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ==============================
-   MESSAGE FORM
-   ============================== */
-
+/*MESSAGE FORM*/
 .chat__message-form {
   display: flex;
   align-items: center;
@@ -423,10 +387,7 @@
   cursor: not-allowed;
 }
 
-/* ==============================
-   USER SECTIONS
-   ============================== */
-
+/*USER SECTIONS*/
 .chat__users-section {
   display: flex;
   flex-direction: column;

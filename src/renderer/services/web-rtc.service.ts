@@ -411,22 +411,18 @@ export class WebRTCService {
   }
 
   setVolume(volume: number): void {
-    if (!this.remoteAudio) {
-      return;
-    }
+    if (!this.remoteAudio) return;
 
-    const normalizedVolume = Math.max(0, Math.min(1, volume));
+    const normalizedVolume = Math.max(0, Math.min(100, volume)) / 100;
 
     this.remoteAudio.volume = normalizedVolume;
 
-    console.log("[WebRTC] Volume ajustado para:", normalizedVolume);
+    console.log("[WebRTC] Volume:", normalizedVolume);
   }
 
   getVolume(): number {
-    if (!this.remoteAudio) {
-      return 1;
-    }
+    if (!this.remoteAudio) return 100;
 
-    return this.remoteAudio.volume;
+    return Math.round(this.remoteAudio.volume * 100);
   }
 }
