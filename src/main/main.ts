@@ -19,6 +19,7 @@ type LoginResult =
   | {
       success: false;
       message: string;
+      emailNotVerified?: boolean;
     };
 
 const isDevelopment = !app.isPackaged;
@@ -86,13 +87,22 @@ ipcMain.handle(
         user,
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "E-mail ou senha incorretos."
-      ) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+
+      if (error.message === "E-mail ou senha incorretos.") {
         return {
           success: false,
           message: error.message,
+        };
+      }
+
+      if (error.message === "E-mail não confirmado.") {
+        return {
+          success: false,
+          message: error.message,
+          emailNotVerified: true,
         };
       }
 
@@ -144,15 +154,29 @@ ipcMain.handle(
 ipcMain.handle(
   "auth:verify-email",
   async (_event, email: string, code: string) => {
-    await authService.verifyEmail({
-      email,
-      code,
-    });
+    try {
+      await authService.verifyEmail({
+        email,
+        code,
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível verificar o e-mail.",
+      };
+    }
   }
 );
 
 ipcMain.handle("auth:resend-verification", async (_event, email: string) => {
-  await authService.resendVerificationEmail({
+  await authService.resendVerification({
     email,
   });
 });

@@ -85,6 +85,11 @@ const showLogin = (): void => {
       const result = await window.api.auth.login(email, password);
 
       if (!result.success) {
+        if (result.emailNotVerified) {
+          showVerifyEmail(email);
+          return;
+        }
+
         throw new Error(result.message);
       }
 
@@ -498,31 +503,26 @@ const showVerifyEmail = (email: string): void => {
 
   verifyEmailPage.bindEvents(
     async (code) => {
-      try {
-        await window.api.auth.verifyEmail(email, code);
+      const result = await window.api.auth.verifyEmail(email, code);
 
-        console.log("[Renderer] E-mail verificado com sucesso.");
-
-        showLogin();
-      } catch (error) {
-        console.error("[Renderer] Erro ao verificar e-mail:", error);
+      //TODO: não sei qq ta rolando aqui mas se tirar para de retornar a mensagem de erro (verificar depois)
+      if (!result.success) {
+        throw new Error(result.message);
       }
+
+      showLogin();
     },
 
     async () => {
-      try {
-        await window.api.auth.resendVerification(email);
-
-        console.log("[Renderer] Código reenviado.");
-      } catch (error) {
-        console.error("[Renderer] Erro ao reenviar código:", error);
-      }
+      await window.api.auth.resendVerification(email);
     },
 
     () => {
       showLogin();
     }
   );
+
+  verifyEmailPage.startInitialResendCooldown();
 };
 
 window.api.socket.onWebRTCOffer(async ({ callerId, offer }) => {

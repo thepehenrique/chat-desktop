@@ -1,4 +1,7 @@
 export class VerifyEmailPage {
+  private resendTimeout: number | null = null;
+  private resendSeconds = 60;
+
   render(container: HTMLElement, email: string): void {
     container.innerHTML = `
       <main class="app">
@@ -25,6 +28,12 @@ export class VerifyEmailPage {
               autocomplete="one-time-code"
               required
             />
+
+            <p
+              id="verify-email-error"
+              class="verify-email__error"
+              role="alert"
+            ></p>
 
             <button type="submit">
               Verificar
@@ -91,23 +100,122 @@ export class VerifyEmailPage {
 
       const code = codeInput.value.trim();
 
-      if (code.length !== 6) {
-        return;
-      }
+      if (code.length !== 6) return;
 
-      await onVerify(code);
+      this.clearError();
+
+      try {
+        await onVerify(code);
+
+        // Código foi aceito.
+        // A partir daqui começa o prazo de 1 minuto
+        // para solicitar outro código.
+        this.startResendCooldown(resendButton);
+      } catch (error) {
+        console.error("Erro ao verificar e-mail:", error);
+
+        if (error instanceof Error) {
+          this.showError(error.message);
+        } else {
+          this.showError("Não foi possível verificar o e-mail.");
+        }
+      }
     });
 
     resendButton.addEventListener("click", async () => {
+      if (resendButton.disabled) {
+        return;
+      }
+
+      this.clearError();
+
       try {
         await onResend();
+
+        // Novo código enviado.
+        // Reinicia o contador de 1 minuto.
+        this.startResendCooldown(resendButton);
       } catch (error) {
         console.error("Erro ao reenviar código:", error);
+
+        if (error instanceof Error) {
+          this.showError(error.message);
+        } else {
+          this.showError("Não foi possível reenviar o código.");
+        }
       }
     });
 
     backButton.addEventListener("click", () => {
       onBackToLogin();
     });
+  }
+
+  private startResendCooldown(button: HTMLButtonElement): void {
+    if (this.resendTimeout !== null) {
+      window.clearInterval(this.resendTimeout);
+    }
+
+    this.resendSeconds = 60;
+    button.disabled = true;
+
+    button.textContent = `Reenviar código (${this.resendSeconds}s)`;
+
+    this.resendTimeout = window.setInterval(() => {
+      this.resendSeconds--;
+
+      if (this.resendSeconds <= 0) {
+        this.stopResendCooldown(button);
+        return;
+      }
+
+      button.textContent = `Reenviar código (${this.resendSeconds}s)`;
+    }, 1000);
+  }
+
+  private stopResendCooldown(button: HTMLButtonElement): void {
+    if (this.resendTimeout !== null) {
+      window.clearInterval(this.resendTimeout);
+      this.resendTimeout = null;
+    }
+
+    button.disabled = false;
+    button.textContent = "Reenviar código";
+  }
+
+  private showError(message: string): void {
+    const errorElement = document.querySelector<HTMLParagraphElement>(
+      "#verify-email-error"
+    );
+
+    if (!errorElement) {
+      return;
+    }
+
+    errorElement.textContent = message;
+    errorElement.style.display = "block";
+  }
+
+  private clearError(): void {
+    const errorElement = document.querySelector<HTMLElement>(
+      "#verify-email-error"
+    );
+
+    if (!errorElement) return;
+
+    errorElement.textContent = "";
+    errorElement.style.display = "none";
+  }
+
+  startInitialResendCooldown(): void {
+    const resendButton = document.querySelector<HTMLButtonElement>(
+      "#resend-verification"
+    );
+
+    if (!resendButton) {
+      return;
+    }
+
+    this.startResendCooldown(resendButton);
   }
 }

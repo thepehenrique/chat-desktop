@@ -18,6 +18,7 @@ declare global {
           | {
               success: false;
               message: string;
+              emailNotVerified?: boolean;
             }
         >;
 

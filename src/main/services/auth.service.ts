@@ -28,6 +28,10 @@ export class AuthService {
         throw new Error("E-mail ou senha incorretos.");
       }
 
+      if (response.status === 403) {
+        throw new Error("E-mail não confirmado.");
+      }
+
       throw new Error("Não foi possível realizar o login.");
     }
 
@@ -101,12 +105,22 @@ export class AuthService {
       body: JSON.stringify(data),
     });
 
+    console.log("[AuthService] verify-email status:", response.status);
+
     if (!response.ok) {
-      throw new Error("Não foi possível verificar o e-mail.");
+      const errorBody = await response.text();
+
+      console.error("[AuthService] verify-email response:", errorBody);
+
+      throw new Error(
+        response.status === 400
+          ? "Código de verificação inválido ou expirado."
+          : "Não foi possível verificar o e-mail."
+      );
     }
   }
 
-  async resendVerificationEmail(data: { email: string }): Promise<void> {
+  async resendVerification(data: { email: string }): Promise<void> {
     const response = await fetch(`${API_URL}/auth/resend-verification`, {
       method: "POST",
 
