@@ -1,3 +1,5 @@
+import { escapeHtml } from "../../utils/escape-html.js";
+
 export class ResetPasswordPage {
   render(container: HTMLElement, email: string): void {
     container.innerHTML = `
@@ -11,7 +13,7 @@ export class ResetPasswordPage {
           </p>
 
           <strong class="reset-password__address">
-            ${email}
+            ${escapeHtml(email)}
           </strong>
 
           <form id="reset-password-form">

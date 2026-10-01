@@ -1,6 +1,6 @@
-import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
+import { AuthenticatedUser } from "../../common/interface/authenticated-user.interface.js";
 import { ChatMessage } from "../interface/chat-message.interface.js";
-import { User } from "../interface/user.interface.js";
+import { User } from "../../common/interface/user.interface.js";
 
 export type CallStatus = "idle" | "calling" | "incoming" | "connected";
 export class AppState {
@@ -128,6 +128,7 @@ export class AppState {
     this.onlineUsers.clear();
     this.selectedUser = null;
     this.messages = [];
+    this.unreadMessages.clear();
     this.clearCall();
   }
 }

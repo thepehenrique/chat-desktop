@@ -9,18 +9,10 @@ import { AppService } from "./services/app.service.js";
 import { SocketService } from "./services/socket.service.js";
 import { UserService } from "./services/user.service.js";
 
-import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface.js";
-
-type LoginResult =
-  | {
-      success: true;
-      user: AuthenticatedUser;
-    }
-  | {
-      success: false;
-      message: string;
-      emailNotVerified?: boolean;
-    };
+import type {
+  LoginResult,
+  VerifyEmailResult,
+} from "../common/interface/auth-results.interface.js";
 
 const isDevelopment = !app.isPackaged;
 
@@ -132,6 +124,16 @@ ipcMain.handle("auth:refresh", async () => {
   return authService.refresh();
 });
 
+ipcMain.handle("app:initialize", async () => {
+  const user = await appService.initialize();
+
+  if (user) {
+    socketService.connect();
+  }
+
+  return user;
+});
+
 ipcMain.handle("auth:logout", async () => {
   socketService.disconnect();
 
@@ -153,7 +155,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   "auth:verify-email",
-  async (_event, email: string, code: string) => {
+  async (_event, email: string, code: string): Promise<VerifyEmailResult> => {
     try {
       await authService.verifyEmail({
         email,

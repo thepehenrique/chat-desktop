@@ -6,6 +6,8 @@ import { VerifyEmailPage } from "./pages/verify-email/verify-email.page.js";
 import { WebRTCService } from "./services/web-rtc.service.js";
 import { ForgotPasswordPage } from "./pages/password/forgot-password.page.js";
 import { ResetPasswordPage } from "./pages/password/reset-password.page.js";
+import notificationSoundUrl from "./assets/popup.mp3";
+import callSoundUrl from "./assets/call.mp3";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -22,9 +24,9 @@ const verifyEmailPage = new VerifyEmailPage();
 const forgotPasswordPage = new ForgotPasswordPage();
 const resetPasswordPage = new ResetPasswordPage();
 
-const notificationSound = new Audio("./assets/popup.mp3");
+const notificationSound = new Audio(notificationSoundUrl);
 
-const callSound = new Audio("./assets/call.mp3");
+const callSound = new Audio(callSoundUrl);
 callSound.volume = 0.5;
 callSound.loop = true;
 
@@ -140,6 +142,8 @@ const showChat = (): void => {
 
     () => webRTCService.isMuted(),
 
+    () => webRTCService.getVolume(),
+
     (selectedUser) => {
       appState.setSelectedUser(selectedUser);
 
@@ -207,6 +211,8 @@ const showChat = (): void => {
       } catch (error) {
         console.error("[Renderer] Erro ao cancelar chamada:", error);
       } finally {
+        stopCallSound();
+        webRTCService.stop();
         appState.clearCall();
 
         showChat();
@@ -505,7 +511,6 @@ const showVerifyEmail = (email: string): void => {
     async (code) => {
       const result = await window.api.auth.verifyEmail(email, code);
 
-      //TODO: não sei qq ta rolando aqui mas se tirar para de retornar a mensagem de erro (verificar depois)
       if (!result.success) {
         throw new Error(result.message);
       }
@@ -615,4 +620,22 @@ const showResetPassword = (email: string): void => {
   );
 };
 
-showLogin();
+const initialize = async (): Promise<void> => {
+  try {
+    const user = await window.api.app.initialize();
+
+    if (!user) {
+      showLogin();
+      return;
+    }
+
+    appState.setAuthenticatedUser(user);
+    appState.setUsers(await window.api.users.findAll());
+    showChat();
+  } catch (error) {
+    console.error("[Renderer] Erro ao restaurar a sessão:", error);
+    showLogin();
+  }
+};
+
+void initialize();

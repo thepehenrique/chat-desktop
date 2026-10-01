@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { AuthenticatedUser } from "../../commom/interface/authenticated-user.interface.js";
+import { AuthenticatedUser } from "../../common/interface/authenticated-user.interface.js";
 import { LoginResponse } from "../interface/login-response.interface.js";
 import { SessionService } from "./session.service.js";
 

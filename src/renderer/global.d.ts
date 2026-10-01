@@ -1,5 +1,9 @@
-import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface";
-import { User } from "./interface/user.interface";
+import type { AuthenticatedUser } from "../common/interface/authenticated-user.interface";
+import type {
+  LoginResult,
+  VerifyEmailResult,
+} from "../common/interface/auth-results.interface";
+import type { User } from "../common/interface/user.interface";
 
 declare global {
   interface Window {
@@ -10,17 +14,7 @@ declare global {
         login: (
           email: string,
           password: string
-        ) => Promise<
-          | {
-              success: true;
-              user: AuthenticatedUser;
-            }
-          | {
-              success: false;
-              message: string;
-              emailNotVerified?: boolean;
-            }
-        >;
+        ) => Promise<LoginResult>;
 
         register: (
           name: string,
@@ -28,7 +22,10 @@ declare global {
           password: string
         ) => Promise<number>;
 
-        verifyEmail: (email: string, code: string) => Promise<void>;
+        verifyEmail: (
+          email: string,
+          code: string
+        ) => Promise<VerifyEmailResult>;
 
         resendVerification: (email: string) => Promise<void>;
 
@@ -43,6 +40,10 @@ declare global {
         refresh: () => Promise<boolean>;
 
         logout: () => Promise<boolean>;
+      };
+
+      app: {
+        initialize: () => Promise<AuthenticatedUser | null>;
       };
 
       socket: {

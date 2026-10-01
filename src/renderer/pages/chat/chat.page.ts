@@ -1,7 +1,8 @@
-import { AuthenticatedUser } from "../../../commom/interface/authenticated-user.interface";
+import { AuthenticatedUser } from "../../../common/interface/authenticated-user.interface.js";
 import { ChatMessage } from "../../interface/chat-message.interface";
-import { User } from "../../interface/user.interface";
+import { User } from "../../../common/interface/user.interface.js";
 import { CallStatus } from "../../state/app.state";
+import { escapeHtml } from "../../utils/escape-html.js";
 
 export class ChatPage {
   private callTimerInterval: number | null = null;
@@ -18,6 +19,7 @@ export class ChatPage {
     callUser: User | null,
     callStartedAt: number | null,
     getIsMuted: () => boolean,
+    getVolume: () => number,
     onSelectUser: (user: User) => void,
     onSendMessage: (receiverId: number, content: string) => Promise<void>,
     onCall: (user: User) => Promise<void>,
@@ -57,7 +59,7 @@ export class ChatPage {
           ></span>
 
           <span class="chat__user-name">
-            ${item.name}
+            ${escapeHtml(item.name)}
           </span>
 
           ${
@@ -77,7 +79,9 @@ export class ChatPage {
 
     const offlineUsersHtml = offlineUsers.map(renderUser).join("");
 
-    const chatTitle = selectedUser?.name ?? "Selecione uma conversa";
+    const chatTitle = escapeHtml(
+      selectedUser?.name ?? "Selecione uma conversa"
+    );
 
     const conversationMessages = selectedUser
       ? messages.filter(
@@ -105,11 +109,11 @@ export class ChatPage {
                   }"
                 >
                   <span class="chat__message-sender">
-                    ${senderName}
+                    ${escapeHtml(senderName ?? "")}
                   </span>
 
                   <p class="chat__message-content">
-                    ${message.content}
+                    ${escapeHtml(message.content)}
                   </p>
                 </div>
               `;
@@ -146,14 +150,19 @@ export class ChatPage {
       : `
           <div class="chat__empty">
             <p>
-              Olá, ${user.name}.
+              Olá, ${escapeHtml(user.name)}.
               Selecione um usuário para
               iniciar uma conversa.
             </p>
           </div>
         `;
 
-    const callModal = this.renderCallModal(callStatus, callUser, getIsMuted);
+    const callModal = this.renderCallModal(
+      callStatus,
+      callUser,
+      getIsMuted,
+      getVolume
+    );
 
     container.innerHTML = `
       <main class="chat">
@@ -373,7 +382,8 @@ export class ChatPage {
   private renderCallModal(
     callStatus: CallStatus,
     callUser: User | null,
-    getIsMuted: () => boolean
+    getIsMuted: () => boolean,
+    getVolume: () => number
   ): string {
     if (callStatus === "idle" || !callUser) {
       return "";
@@ -394,7 +404,7 @@ export class ChatPage {
           </h2>
 
           <p>
-            ${callUser.name}
+            ${escapeHtml(callUser.name)}
           </p>
 
           <button
@@ -426,7 +436,7 @@ export class ChatPage {
           </h2>
 
           <p>
-            ${callUser.name} está ligando...
+            ${escapeHtml(callUser.name)} está ligando...
           </p>
 
           <div class="call-modal__actions">
@@ -457,6 +467,7 @@ export class ChatPage {
 
     if (callStatus === "connected") {
       const isMuted = getIsMuted();
+      const volume = getVolume();
 
       return `
     <div class="call-overlay">
@@ -472,7 +483,7 @@ export class ChatPage {
         </h2>
 
         <p>
-          ${callUser.name}
+          ${escapeHtml(callUser.name)}
         </p>
 
         <span
@@ -490,7 +501,7 @@ export class ChatPage {
             type="range"
             min="0"
             max="100"
-            value="100"
+            value="${volume}"
           />
         </div>
 
@@ -501,7 +512,8 @@ export class ChatPage {
             class="call-modal__button"
             type="button"
           >
-            ${isMuted ? "🔇 Desmutar" : "🎤 Mutar"}
+            <span id="mute-call-icon">${isMuted ? "🔇" : "🎤"}</span>
+            <span id="mute-call-text">${isMuted ? "Desmutar" : "Mutar"}</span>
           </button>
 
           <button

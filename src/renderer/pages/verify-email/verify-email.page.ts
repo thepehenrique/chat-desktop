@@ -1,3 +1,5 @@
+import { escapeHtml } from "../../utils/escape-html.js";
+
 export class VerifyEmailPage {
   private resendTimeout: number | null = null;
   private resendSeconds = 60;
@@ -14,7 +16,7 @@ export class VerifyEmailPage {
           </p>
 
           <strong class="verify-email__address">
-            ${email}
+            ${escapeHtml(email)}
           </strong>
 
           <form id="verify-email-form">

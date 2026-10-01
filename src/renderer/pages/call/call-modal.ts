@@ -1,4 +1,5 @@
-import { User } from "../../interface/user.interface.js";
+import { User } from "../../../common/interface/user.interface.js";
+import { escapeHtml } from "../../utils/escape-html.js";
 
 export class CallModal {
   showIncomingCall(
@@ -28,7 +29,7 @@ export class CallModal {
           </h2>
 
           <p>
-            ${caller.name} está ligando...
+            ${escapeHtml(caller.name)} está ligando...
           </p>
 
           <div class="call-modal__actions">

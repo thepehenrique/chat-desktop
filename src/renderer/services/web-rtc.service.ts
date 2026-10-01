@@ -1,4 +1,4 @@
-import { User } from "../interface/user.interface.js";
+import { User } from "../../common/interface/user.interface.js";
 
 export class WebRTCService {
   private peerConnection: RTCPeerConnection | null = null;
@@ -10,8 +10,6 @@ export class WebRTCService {
   private remoteAudio: HTMLAudioElement | null = null;
 
   private remoteUser: User | null = null;
-
-  private remoteUserId: number | null = null;
 
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
@@ -135,6 +133,8 @@ export class WebRTCService {
     );
 
     console.log("[WebRTC] Remote description configurada através da answer.");
+
+    await this.flushPendingIceCandidates();
   }
 
   async handleIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
@@ -388,7 +388,6 @@ export class WebRTCService {
     }
 
     this.remoteUser = null;
-    this.remoteUserId = null;
     this.pendingIceCandidates = [];
 
     console.log("[WebRTC] Conexão encerrada.");

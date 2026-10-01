@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { AuthenticatedUser } from "../commom/interface/authenticated-user.interface";
+import type { AuthenticatedUser } from "../common/interface/authenticated-user.interface";
+import type {
+  LoginResult,
+  VerifyEmailResult,
+} from "../common/interface/auth-results.interface";
 
 contextBridge.exposeInMainWorld("api", {
   ping: (): Promise<string> => {
@@ -10,16 +14,7 @@ contextBridge.exposeInMainWorld("api", {
     login: (
       email: string,
       password: string
-    ): Promise<
-      | {
-          success: true;
-          user: AuthenticatedUser;
-        }
-      | {
-          success: false;
-          message: string;
-        }
-    > => {
+    ): Promise<LoginResult> => {
       return ipcRenderer.invoke("auth:login", email, password);
     },
 
@@ -31,7 +26,7 @@ contextBridge.exposeInMainWorld("api", {
       return ipcRenderer.invoke("users:register", name, email, password);
     },
 
-    verifyEmail: (email: string, code: string): Promise<void> => {
+    verifyEmail: (email: string, code: string): Promise<VerifyEmailResult> => {
       return ipcRenderer.invoke("auth:verify-email", email, code);
     },
 
@@ -57,6 +52,12 @@ contextBridge.exposeInMainWorld("api", {
 
     logout: (): Promise<boolean> => {
       return ipcRenderer.invoke("auth:logout");
+    },
+  },
+
+  app: {
+    initialize: (): Promise<AuthenticatedUser | null> => {
+      return ipcRenderer.invoke("app:initialize");
     },
   },
 

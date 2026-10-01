@@ -35,7 +35,6 @@ export class SocketService {
     this.registerPresenceEvents(this.socket);
     this.registerMessageEvents(this.socket);
     this.registerCallEvents(this.socket);
-    this.registerCallEvents(this.socket);
     this.registerWebRTCEvents(this.socket);
   }
 

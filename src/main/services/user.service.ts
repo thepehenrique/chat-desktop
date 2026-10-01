@@ -1,4 +1,5 @@
 import "dotenv/config";
+import type { User } from "../../common/interface/user.interface.js";
 import { SessionService } from "./session.service.js";
 
 interface CreateUserRequest {
@@ -10,7 +11,7 @@ interface CreateUserRequest {
 export class UserService {
   constructor(private readonly sessionService: SessionService) {}
 
-  async findAll(): Promise<unknown[]> {
+  async findAll(): Promise<User[]> {
     const accessToken = this.sessionService.getAccessToken();
 
     if (!accessToken) {
@@ -29,7 +30,7 @@ export class UserService {
       throw new Error("Erro ao buscar usuários.");
     }
 
-    return response.json();
+    return response.json() as Promise<User[]>;
   }
 
   async create(data: CreateUserRequest): Promise<number> {
